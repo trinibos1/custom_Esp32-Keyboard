@@ -94,7 +94,7 @@ const Modal = ({ show, title, message, onClose }) => {
   );
 };
 
-export default function Configurator() {
+export default function App() { // Changed function name to App for default export
   const [keymap, setKeymap] = useState(initialGrid);
   const [shortcutPool, setShortcutPool] = useState(Object.fromEntries(Object.entries(presets).map(([k, v]) => [k, [...v]])));
   const [showModal, setShowModal] = useState(false);
@@ -314,37 +314,45 @@ export default function Configurator() {
 
   const uploadToDevice = async () => {
     try {
-      const port = await navigator.serial.requestPort();
-      await port.open({ baudRate: 115200 });
-      const writer = port.writable.getWriter();
-      const fullMap = {
-        layout: "3x3",
-        layers: {
-          default: keymap.map(row => row.map(cell => ({
-            tap: cell.tap ? cell.tap.combo : "", // Export only the combo
-            hold: cell.hold ? cell.hold.combo : ""
-          }))),
-        },
-        peripherals: {
-          potentiometers: [
-            potentiometerConfig.enabled ? {
-              pin: potentiometerConfig.pin,
-              function: potentiometerConfig.function,
-              customAction: potentiometerConfig.customAction
-            } : null
-          ].filter(Boolean)
-        },
-        macros: macros.map(m => ({ name: m.name, sequence: m.sequence }))
-      };
-      const json = JSON.stringify(fullMap);
-      const encoder = new TextEncoder();
-      await writer.write(encoder.encode(json));
-      writer.releaseLock();
-      await port.close();
-      setModalContent({
-        title: "Upload Successful",
-        message: "Configuration uploaded successfully!"
-      });
+      // Check for Web Serial API support
+      if ('serial' in navigator) {
+        const port = await navigator.serial.requestPort();
+        await port.open({ baudRate: 115200 });
+        const writer = port.writable.getWriter();
+        const fullMap = {
+          layout: "3x3",
+          layers: {
+            default: keymap.map(row => row.map(cell => ({
+              tap: cell.tap ? cell.tap.combo : "", // Export only the combo
+              hold: cell.hold ? cell.hold.combo : ""
+            }))),
+          },
+          peripherals: {
+            potentiometers: [
+              potentiometerConfig.enabled ? {
+                pin: potentiometerConfig.pin,
+                function: potentiometerConfig.function,
+                customAction: potentiometerConfig.customAction
+              } : null
+            ].filter(Boolean)
+          },
+          macros: macros.map(m => ({ name: m.name, sequence: m.sequence }))
+        };
+        const json = JSON.stringify(fullMap);
+        const encoder = new TextEncoder();
+        await writer.write(encoder.encode(json));
+        writer.releaseLock();
+        await port.close();
+        setModalContent({
+          title: "Upload Successful",
+          message: "Configuration uploaded successfully!"
+        });
+      } else {
+        setModalContent({
+          title: "Web Serial API Not Supported",
+          message: "Your browser does not support the Web Serial API. Please use a Chromium-based browser (e.g., Chrome, Edge) to upload to device."
+        });
+      }
     } catch (err) {
       setModalContent({
         title: "Upload Failed",
@@ -445,9 +453,44 @@ export default function Configurator() {
   };
 
   const deleteMacro = (id) => {
-    if (window.confirm("Are you sure you want to delete this macro?")) {
-      setMacros(prev => prev.filter(m => m.id !== id));
-    }
+    // Replaced window.confirm with a custom modal for consistency and better UX
+    setModalContent({
+      title: "Confirm Delete",
+      message: "Are you sure you want to delete this macro?",
+      onConfirm: () => {
+        setMacros(prev => prev.filter(m => m.id !== id));
+        setShowModal(false); // Close modal after action
+      },
+      onCancel: () => setShowModal(false) // Close modal on cancel
+    });
+    setShowModal(true);
+  };
+
+  // Custom Modal for confirmation (replaces window.confirm)
+  const ConfirmationModal = ({ show, title, message, onConfirm, onCancel }) => {
+    if (!show) return null;
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+        <div className="bg-zinc-800 text-white p-6 rounded-lg shadow-xl max-w-sm w-full border-2 border-red-500">
+          <h3 className="text-xl font-bold mb-4 text-red-400">{title}</h3>
+          {message && <p className="mb-4">{message}</p>}
+          <div className="flex justify-end space-x-4">
+            <button
+              onClick={onCancel}
+              className="bg-zinc-600 hover:bg-zinc-700 px-4 py-2 rounded-xl shadow-lg transition-colors duration-200"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-xl shadow-lg transition-colors duration-200"
+            >
+              Confirm
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
 
@@ -490,326 +533,292 @@ export default function Configurator() {
             </li>
             <li>
               <a href="#" onClick={() => setActiveTab('keytester')} className={`flex items-center ${activeTab === 'keytester' ? 'text-red-300' : 'text-zinc-400'} hover:text-white transition-colors duration-200`}>
-                <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 00-1 1v10a1 1 0 001 1h12a1 1 0 001-1V5a1 1 0 00-1-1h-3.382l-.724-1.447A1 1 0 0011 2H9zM4 6h12v8H4V6z"></path></svg>
+                <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 10-2 0v1a1 1 0 002 0V3zM14 8a1 1 0 011 1v1a1 1 0 11-2 0V9a1 1 0 011-1zM6 8a1 1 0 00-1 1v1a1 1 0 002 0V9a1 1 0 00-1-1zm0 4a1 1 0 00-1 1v1a1 1 0 002 0v-1a1 1 0 00-1-1zm8 0a1 1 0 00-1 1v1a1 1 0 002 0v-1a1 1 0 00-1-1zm-4 4a1 1 0 00-1 1v1a1 1 0 002 0v-1a1 1 0 00-1-1zM2 10a1 1 0 001 1h1a1 1 0 000-2H3a1 1 0 00-1 1zm14 0a1 1 0 001 1h1a1 1 0 000-2h-1a1 1 0 00-1 1zM7 10a3 3 0 116 0 3 3 0 01-6 0z"></path></svg>
                 KEY TESTER
               </a>
             </li>
           </ul>
         </nav>
-        <div className="text-sm text-zinc-500 mt-auto">
-          <p>Version 1.0</p>
-          <p>Device: Micropad</p>
-        </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-grow p-8 bg-zinc-800 flex flex-col">
-        {/* Top Bar */}
-        <div className="flex justify-between items-center mb-8 pb-4 border-b border-zinc-700">
-          <div className="flex space-x-6">
-            <span className="text-lg font-semibold text-red-400">CONFIGURE</span>
-            <span className="text-lg text-zinc-400">KEY TESTER</span>
-            <span className="text-lg text-zinc-400">SETTINGS</span>
-          </div>
-          <div className="text-zinc-500">
-            <span className="mr-2">1UP60HSE</span>
-            <button className="bg-zinc-700 px-3 py-1 rounded-md text-sm hover:bg-zinc-600 transition-colors duration-200">
-              <svg className="w-4 h-4 inline-block mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path><path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd"></path></svg>
-              LIVE
-            </button>
-          </div>
-        </div>
-
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col p-8 overflow-auto">
         {activeTab === 'keymap' && (
           <>
-            {/* Keymap Section */}
-            <div className="mb-10">
-              <h2 className="text-xl font-bold text-red-300 mb-4">KEYMAP</h2>
-              <div className="flex space-x-2 mb-6">
-                {['0', '1', '2', '3'].map(layer => (
-                  <button
-                    key={layer}
-                    className={`px-4 py-2 rounded-md font-semibold text-lg transition-colors duration-200 ${layer === '0' ? 'bg-red-600 text-white' : 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600'}`}
-                  >
-                    {layer}
-                  </button>
-                ))}
-              </div>
+            <h1 className="text-4xl font-extrabold text-red-400 mb-8">KEYMAP CONFIGURATION</h1>
 
-              {/* Conditional rendering of the micropad grid */}
-              {!isKeymapEmpty ? (
-                <div className="bg-zinc-900 p-6 rounded-lg shadow-inner border border-zinc-700 w-fit mx-auto">
-                  <div className="grid grid-cols-3 gap-2">
-                    {keymap.map((row, rIdx) =>
-                      row.map((cell, cIdx) => (
-                        <div
-                          key={`${rIdx}-${cIdx}`}
-                          draggable
-                          onDragStart={(e) => handleKeymapDragStart(e, cell, rIdx, cIdx)}
-                          onDrop={(e) => handleDrop(e, rIdx, cIdx)}
-                          onDragOver={(e) => e.preventDefault()}
-                          onDragEnd={handleDragEnd}
-                          // Visual feedback for drag over
-                          className={`
-                            w-24 h-24 bg-zinc-700 text-white rounded-md shadow-md border border-zinc-600
-                            flex flex-col justify-center items-center cursor-grab active:cursor-grabbing
-                            relative overflow-hidden
-                            transform transition-all duration-200
-                            ${draggedShortcut ? 'border-dashed border-red-300' : 'hover:bg-red-600 hover:scale-105'}
-                          `}
-                        >
-                          <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-700 rounded-md"></div>
-                          <div className="relative z-10 text-sm font-bold text-red-200 drop-shadow-md text-center px-1">
-                            {cell.tap ? cell.tap.description || cell.tap.combo : ""}
-                          </div>
-                          {cell.hold && <div className="relative z-10 text-xs text-zinc-400 mt-1">/ {cell.hold.description || cell.hold.combo}</div>}
-                        </div>
-                      ))
+            {/* Keymap Grid */}
+            <div className="grid grid-cols-3 gap-4 mb-12 w-full max-w-md mx-auto">
+              {keymap.map((row, rIdx) => (
+                row.map((cell, cIdx) => (
+                  <div
+                    key={`${rIdx}-${cIdx}`}
+                    className="relative bg-zinc-700 rounded-xl p-4 h-32 flex flex-col items-center justify-center border-2 border-zinc-600 shadow-md
+                                hover:border-red-500 transition-all duration-200 cursor-grab"
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => handleDrop(e, rIdx, cIdx)}
+                    draggable
+                    onDragStart={(e) => handleKeymapDragStart(e, cell, rIdx, cIdx)}
+                    onDragEnd={handleDragEnd}
+                  >
+                    {cell.tap ? (
+                      <>
+                        <span className="text-2xl font-bold text-red-300">{cell.tap.combo}</span>
+                        <span className="text-sm text-zinc-400 text-center mt-1">{cell.tap.description}</span>
+                      </>
+                    ) : (
+                      <span className="text-zinc-500">Drag & Drop Here</span>
+                    )}
+                    {/* Clear button for each cell */}
+                    {(cell.tap || cell.hold) && (
+                      <button
+                        onClick={() => {
+                          const updatedKeymap = [...keymap];
+                          updatedKeymap[rIdx][cIdx] = { tap: null, hold: null };
+                          setKeymap(updatedKeymap);
+                        }}
+                        className="absolute top-1 right-1 text-zinc-400 hover:text-red-500 text-sm p-1 rounded-full bg-zinc-600 hover:bg-zinc-500 transition-colors"
+                        title="Clear cell"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
                     )}
                   </div>
-                </div>
-              ) : (
-                <div className="bg-zinc-900 p-6 rounded-lg shadow-inner border border-zinc-700 h-48 flex items-center justify-center text-zinc-400 text-lg text-center">
-                  No keymap loaded. Drag shortcuts from the pool below to configure your micropad, or load a saved profile from Settings.
-                </div>
-              )}
+                ))
+              ))}
             </div>
 
-            {/* Shortcut Pool */}
-            <div className="mt-10 w-full">
-              <h2 className="text-xl text-red-400 font-bold mb-4">SHORTCUTS</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {Object.entries(shortcutPool).map(([app, shortcuts]) => (
-                  <div key={app} className="mb-4 bg-zinc-900 p-5 rounded-xl shadow-xl border border-red-600">
-                    <h3 className="text-lg font-semibold mb-3 text-red-300 border-b border-red-500 pb-2">{app}</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {shortcuts.map((s, i) => (
-                        <div
-                          key={`${app}-${i}`}
-                          draggable
-                          onDragStart={(e) => handleShortcutDragStart(e, s)}
-                          onDragEnd={handleDragEnd}
-                          className="
-                            px-4 py-2 bg-zinc-700 text-white rounded-full shadow-md cursor-grab
-                            hover:bg-red-500 hover:scale-105 transition-all duration-200
-                            flex items-center justify-center text-sm font-medium
-                            relative
-                          "
-                        >
-                          {s.description || s.combo} {/* Display description */}
-                          {/* Input for editing shortcut */}
-                          <input
-                            type="text"
-                            value={s.combo} // Input value is the combo
-                            onChange={(e) => updatePreset(app, i, { ...s, combo: e.target.value, description: s.description || e.target.value })}
-                            onClick={(e) => e.stopPropagation()} // Prevent drag start on click
-                            className="absolute inset-0 w-full h-full bg-transparent text-transparent border-none focus:outline-none cursor-text opacity-0"
-                            style={{ zIndex: 10 }} // Ensure input is clickable
-                          />
-                        </div>
-                      ))}
-                    </div>
-                    {/* Add New Shortcut Button */}
-                    <button
-                      onClick={() => {
-                        const combo = prompt(`Enter new key combination for ${app}:`);
-                        if (combo) {
-                          const description = prompt(`Enter description for ${combo}:`);
-                          updatePreset(app, shortcuts.length, { combo, description: description || combo });
-                        }
-                      }}
-                      className="mt-4 w-full bg-red-800 hover:bg-red-900 text-white text-sm py-2 rounded-lg transition-colors duration-200"
-                    >
-                      + Add Shortcut
-                    </button>
+            <h2 className="text-3xl font-bold text-red-400 mb-6">SHORTCUTS</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 custom-scrollbar max-h-96 overflow-y-auto pr-4">
+              {Object.entries(shortcutPool).map(([app, shortcuts]) => (
+                <div key={app} className="bg-zinc-700 rounded-xl p-4 border-2 border-zinc-600 shadow-lg">
+                  <h3 className="text-xl font-semibold text-red-300 mb-3">{app}</h3>
+                  <div className="space-y-2">
+                    {shortcuts.map((shortcut, sIdx) => (
+                      <div
+                        key={`${app}-${sIdx}`}
+                        className={`bg-zinc-600 rounded-lg p-3 flex flex-col items-start cursor-grab
+                                    ${draggedShortcut === shortcut ? 'opacity-50 border-red-500 border-2' : 'border-2 border-zinc-600'}
+                                    hover:bg-zinc-500 hover:border-red-400 transition-all duration-200`}
+                        draggable
+                        onDragStart={(e) => handleShortcutDragStart(e, shortcut)}
+                        onDragEnd={handleDragEnd}
+                      >
+                        <span className="font-medium text-lg">{shortcut.combo}</span>
+                        <span className="text-sm text-zinc-300">{shortcut.description}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
           </>
         )}
 
         {activeTab === 'macros' && (
-          <div className="w-full max-w-4xl mx-auto">
-            <h2 className="text-xl font-bold text-red-300 mb-4">MACROS</h2>
-            <div className="bg-zinc-900 p-6 rounded-lg shadow-inner border border-zinc-700 mb-6">
-              <button
-                onClick={addMacro}
-                className="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-full shadow-lg text-lg font-semibold transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75 mb-4"
-              >
-                + Add New Macro
-              </button>
-              {macros.length === 0 ? (
-                <p className="text-zinc-400">No macros defined yet.</p>
-              ) : (
-                <div className="space-y-4">
+          <div className="flex flex-col items-center w-full">
+            <h1 className="text-4xl font-extrabold text-red-400 mb-8">MACRO MANAGEMENT</h1>
+            <button
+              onClick={addMacro}
+              className="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold mb-8"
+            >
+              Add New Macro
+            </button>
+
+            {macros.length === 0 ? (
+              <p className="text-zinc-400 text-lg">No macros defined yet. Click "Add New Macro" to create one.</p>
+            ) : (
+              <div className="w-full max-w-2xl bg-zinc-700 rounded-xl p-6 shadow-lg border-2 border-zinc-600">
+                <h2 className="text-2xl font-bold text-red-300 mb-4">Defined Macros</h2>
+                <ul className="space-y-4">
                   {macros.map(macro => (
-                    <div key={macro.id} className="bg-zinc-800 p-4 rounded-md border border-zinc-700 flex justify-between items-center">
+                    <li key={macro.id} className="bg-zinc-600 rounded-lg p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center shadow-md border border-zinc-500">
                       <div>
-                        <h4 className="font-semibold text-lg text-red-200">{macro.name}</h4>
-                        <p className="text-sm text-zinc-300 break-all">{macro.sequence}</p>
+                        <p className="text-xl font-semibold text-white">{macro.name}</p>
+                        <p className="text-zinc-300 text-sm break-all">Sequence: "{macro.sequence}"</p>
                       </div>
-                      <div className="flex space-x-2">
-                        <button onClick={() => editMacro(macro.id)} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-sm">Edit</button>
-                        <button onClick={() => deleteMacro(macro.id)} className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm">Delete</button>
+                      <div className="flex space-x-3 mt-3 sm:mt-0">
+                        <button
+                          onClick={() => editMacro(macro.id)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-sm transition-colors duration-200"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => deleteMacro(macro.id)}
+                          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm transition-colors duration-200"
+                        >
+                          Delete
+                        </button>
                       </div>
-                    </div>
+                    </li>
                   ))}
-                </div>
-              )}
-            </div>
+                </ul>
+              </div>
+            )}
           </div>
         )}
 
         {activeTab === 'controls' && (
-            <div className="w-full max-w-4xl mx-auto">
-                <h2 className="text-xl font-bold text-red-300 mb-4">PERIPHERAL CONTROLS</h2>
-                <div className="bg-zinc-900 p-6 rounded-lg shadow-inner border border-zinc-700 mb-6">
-                    <h3 className="text-lg font-semibold text-red-300 mb-4">Potentiometer 1 Configuration</h3>
-                    <div className="flex items-center mb-4">
-                        <label htmlFor="pot-enabled" className="mr-3 text-zinc-300">Enable Potentiometer:</label>
-                        <input
-                            type="checkbox"
-                            id="pot-enabled"
-                            checked={potentiometerConfig.enabled}
-                            onChange={(e) => setPotentiometerConfig(prev => ({ ...prev, enabled: e.target.checked }))}
-                            className="form-checkbox h-5 w-5 text-red-600 rounded border-gray-300 focus:ring-red-500"
-                        />
-                    </div>
-                    {potentiometerConfig.enabled && (
-                        <>
-                            <div className="mb-4">
-                                <label htmlFor="pot-pin" className="block text-zinc-300 mb-2">Analog Pin:</label>
-                                <input
-                                    type="number"
-                                    id="pot-pin"
-                                    value={potentiometerConfig.pin}
-                                    onChange={(e) => setPotentiometerConfig(prev => ({ ...prev, pin: parseInt(e.target.value) || 0 }))}
-                                    className="w-24 px-3 py-2 bg-zinc-800 text-white rounded-md border border-zinc-600 focus:outline-none focus:ring-2 focus:ring-red-500"
-                                    min="0"
-                                />
-                            </div>
-                            <div className="mb-4">
-                                <label htmlFor="pot-function" className="block text-zinc-300 mb-2">Function:</label>
-                                <select
-                                    id="pot-function"
-                                    value={potentiometerConfig.function}
-                                    onChange={(e) => setPotentiometerConfig(prev => ({ ...prev, function: e.target.value }))}
-                                    className="w-full px-3 py-2 bg-zinc-800 text-white rounded-md border border-zinc-600 focus:outline-none focus:ring-2 focus:ring-red-500"
-                                >
-                                    <option value="volume">Volume Control</option>
-                                    <option value="scroll">Scroll</option>
-                                    <option value="custom">Custom QMK Keycode</option>
-                                </select>
-                            </div>
-                            {potentiometerConfig.function === 'custom' && (
-                                <div className="mb-4">
-                                    <label htmlFor="pot-custom-action" className="block text-zinc-300 mb-2">Custom QMK Keycode:</label>
-                                    <input
-                                        type="text"
-                                        id="pot-custom-action"
-                                        value={potentiometerConfig.customAction}
-                                        onChange={(e) => setPotentiometerConfig(prev => ({ ...prev, customAction: e.target.value }))}
-                                        className="w-full px-3 py-2 bg-zinc-800 text-white rounded-md border border-zinc-600 focus:outline-none focus:ring-2 focus:ring-red-500"
-                                        placeholder="e.g., KC_MPLY or custom_macro_name"
-                                    />
-                                </div>
-                            )}
-                        </>
-                    )}
-                </div>
-            </div>
-        )}
+          <div className="flex flex-col items-center w-full">
+            <h1 className="text-4xl font-extrabold text-red-400 mb-8">PERIPHERAL CONTROLS</h1>
 
-        {activeTab === 'keytester' && (
-          <div className="w-full max-w-4xl mx-auto">
-            <h2 className="text-xl font-bold text-red-300 mb-4">KEY TESTER</h2>
-            <div className="bg-zinc-900 p-6 rounded-lg shadow-inner border border-zinc-700 h-64 overflow-y-auto custom-scrollbar">
-              <p className="text-zinc-400 mb-4">Press any key on your physical keyboard to see its key code and key value.</p>
-              {pressedKeys.length === 0 ? (
-                <p className="text-zinc-500">No keys pressed yet...</p>
-              ) : (
-                <ul className="space-y-2">
-                  {pressedKeys.map((keyInfo, index) => (
-                    <li key={index} className="bg-zinc-700 p-2 rounded-md font-mono text-sm">
-                      <span className="text-red-300">Key:</span> {keyInfo.key} | <span className="text-blue-300">Code:</span> {keyInfo.code}
-                    </li>
-                  ))}
-                </ul>
-              )}
+            <div className="w-full max-w-xl bg-zinc-700 rounded-xl p-6 shadow-lg border-2 border-zinc-600">
+              <h2 className="text-2xl font-bold text-red-300 mb-4">Potentiometer Configuration</h2>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="potentiometer-enable" className="text-lg text-zinc-200">Enable Potentiometer:</label>
+                  <input
+                    type="checkbox"
+                    id="potentiometer-enable"
+                    checked={potentiometerConfig.enabled}
+                    onChange={(e) => setPotentiometerConfig(prev => ({ ...prev, enabled: e.target.checked }))}
+                    className="form-checkbox h-6 w-6 text-red-600 rounded focus:ring-red-500"
+                  />
+                </div>
+
+                {potentiometerConfig.enabled && (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <label htmlFor="potentiometer-pin" className="text-lg text-zinc-200">Analog Pin:</label>
+                      <input
+                        type="number"
+                        id="potentiometer-pin"
+                        value={potentiometerConfig.pin}
+                        onChange={(e) => setPotentiometerConfig(prev => ({ ...prev, pin: parseInt(e.target.value) || 0 }))}
+                        className="bg-zinc-800 border border-zinc-600 rounded-md p-2 w-24 text-white"
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <label htmlFor="potentiometer-function" className="text-lg text-zinc-200">Function:</label>
+                      <select
+                        id="potentiometer-function"
+                        value={potentiometerConfig.function}
+                        onChange={(e) => setPotentiometerConfig(prev => ({ ...prev, function: e.target.value }))}
+                        className="bg-zinc-800 border border-zinc-600 rounded-md p-2 text-white"
+                      >
+                        <option value="volume">Volume Control</option>
+                        <option value="scroll">Scroll</option>
+                        <option value="custom">Custom QMK Keycode</option>
+                      </select>
+                    </div>
+
+                    {potentiometerConfig.function === 'custom' && (
+                      <div className="flex items-center justify-between">
+                        <label htmlFor="custom-action" className="text-lg text-zinc-200">Custom QMK Keycode:</label>
+                        <input
+                          type="text"
+                          id="custom-action"
+                          value={potentiometerConfig.customAction}
+                          onChange={(e) => setPotentiometerConfig(prev => ({ ...prev, customAction: e.target.value }))}
+                          placeholder="e.g., KC_MPLY"
+                          className="bg-zinc-800 border border-zinc-600 rounded-md p-2 w-48 text-white"
+                        />
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
           </div>
         )}
 
         {activeTab === 'save-load' && (
-          <div className="flex flex-col items-center justify-center h-full text-zinc-400 text-2xl">
-            <h2 className="text-xl font-bold text-red-300 mb-4">SAVE / LOAD Profile</h2>
-            <div className="flex flex-wrap justify-center gap-4 mt-8">
-              <button onClick={saveProfile} className="bg-zinc-700 hover:bg-zinc-600 px-6 py-3 rounded-full shadow-lg text-lg font-semibold transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-opacity-75">
-                Save Profile
+          <div className="flex flex-col items-center w-full">
+            <h1 className="text-4xl font-extrabold text-red-400 mb-8">SAVE & LOAD PROFILE</h1>
+            <div className="flex flex-col space-y-4 w-full max-w-md">
+              <button
+                onClick={saveProfile}
+                className="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold"
+              >
+                Save Profile to Browser
               </button>
-              <button onClick={loadProfile} className="bg-zinc-700 hover:bg-zinc-600 px-6 py-3 rounded-full shadow-lg text-lg font-semibold transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-opacity-75">
-                Load Profile
+              <button
+                onClick={loadProfile}
+                className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold"
+              >
+                Load Profile from Browser
+              </button>
+              <button
+                onClick={exportKeymap}
+                className="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold"
+              >
+                Export Configuration as JSON
+              </button>
+              <button
+                onClick={uploadToDevice}
+                className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold"
+              >
+                Upload to Device (Web Serial)
               </button>
             </div>
           </div>
         )}
 
         {activeTab === 'settings' && (
-          <div className="flex flex-col items-center justify-center w-full text-zinc-400">
-            <h2 className="text-xl font-bold text-red-300 mb-4">SETTINGS</h2>
-
-            <div className="bg-zinc-900 p-6 rounded-lg shadow-inner border border-zinc-700 w-full max-w-4xl mb-8">
-              <h3 className="text-lg font-semibold text-red-300 mb-4">QMK JSON Configuration</h3>
-              <p className="mb-4 text-sm">
-                You can export your current micropad keymap as JSON, upload it to your device, or load a keymap by pasting JSON below.
-                Note: This configurator supports a 3x3 micropad layout.
-              </p>
-              <div className="flex flex-wrap justify-center gap-4 mb-6">
-                <button onClick={exportKeymap} className="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-full shadow-lg text-lg font-semibold transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75">
-                  Export Keymap JSON
-                </button>
-                <button onClick={uploadToDevice} className="bg-white text-black hover:bg-zinc-200 px-6 py-3 rounded-full shadow-lg text-lg font-semibold transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-75">
-                  Upload Keymap to Device
-                </button>
-              </div>
-
-              <h4 className="text-md font-semibold text-red-300 mb-2">Load JSON from Text Area</h4>
+          <div className="flex flex-col items-center w-full">
+            <h1 className="text-4xl font-extrabold text-red-400 mb-8">SETTINGS</h1>
+            <div className="w-full max-w-2xl bg-zinc-700 rounded-xl p-6 shadow-lg border-2 border-zinc-600">
+              <h2 className="text-2xl font-bold text-red-300 mb-4">Import JSON Configuration</h2>
               <textarea
-                className="w-full h-40 bg-zinc-800 text-white p-4 rounded-md border border-zinc-600 focus:outline-none focus:ring-2 focus:ring-red-500 font-mono text-sm"
-                placeholder="Paste your QMK keymap JSON here..."
+                className="w-full h-64 bg-zinc-800 border border-zinc-600 rounded-md p-4 text-white font-mono text-sm resize-y"
+                placeholder="Paste your JSON configuration here..."
                 value={jsonInput}
                 onChange={(e) => setJsonInput(e.target.value)}
               ></textarea>
               <button
                 onClick={loadJsonFromTextArea}
-                className="mt-4 w-full bg-red-800 hover:bg-red-900 text-white text-lg py-3 rounded-full transition-colors duration-200 shadow-lg"
+                className="mt-4 bg-teal-600 hover:bg-teal-700 px-6 py-3 rounded-xl shadow-lg transition-colors duration-200 text-lg font-semibold w-full"
               >
                 Load JSON
               </button>
             </div>
+          </div>
+        )}
 
-            {/* Live JSON Preview */}
-            <h3 className="text-lg font-semibold text-red-300 mb-2">Current Keymap JSON Preview</h3>
-            <pre className="mt-2 text-sm bg-zinc-900 p-6 rounded-lg text-left w-full max-w-4xl overflow-x-auto border border-red-500 font-mono shadow-inner">
-              {JSON.stringify({
-                layout: "3x3",
-                layers: { default: keymap.map(row => row.map(cell => ({
-                  tap: cell.tap ? cell.tap.combo : "",
-                  hold: cell.hold ? cell.hold.combo : ""
-                })))}
-              }, null, 2)}
-            </pre>
+        {activeTab === 'keytester' && (
+          <div className="flex flex-col items-center w-full">
+            <h1 className="text-4xl font-extrabold text-red-400 mb-8">KEY TESTER</h1>
+            <p className="text-zinc-300 mb-6 text-lg">Press any key on your keyboard to see its details.</p>
+            <div className="w-full max-w-2xl bg-zinc-700 rounded-xl p-6 shadow-lg border-2 border-zinc-600 min-h-[200px] flex flex-wrap items-center justify-center gap-4">
+              {pressedKeys.length === 0 ? (
+                <p className="text-zinc-400 text-xl">No keys pressed...</p>
+              ) : (
+                pressedKeys.map((keyInfo, index) => (
+                  <div
+                    key={keyInfo.code + '-' + keyInfo.timestamp} // Use timestamp for unique key
+                    className="bg-zinc-600 rounded-lg p-4 shadow-md border border-zinc-500 flex flex-col items-center justify-center min-w-[120px]"
+                  >
+                    <span className="text-xl font-bold text-red-300">{keyInfo.key === ' ' ? 'Space' : keyInfo.key}</span>
+                    <span className="text-sm text-zinc-400 mt-1">{keyInfo.code}</span>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         )}
       </div>
 
+      {/* Modal for messages */}
       <Modal
-        show={showModal}
+        show={showModal && !modalContent.onConfirm} // Only show basic modal if not a confirmation
         title={modalContent.title}
         message={modalContent.message}
         onClose={() => setShowModal(false)}
       />
+
+      {/* Confirmation Modal (for delete macro) */}
+      <ConfirmationModal
+        show={showModal && modalContent.onConfirm} // Show confirmation modal if onConfirm is present
+        title={modalContent.title}
+        message={modalContent.message}
+        onConfirm={modalContent.onConfirm}
+        onCancel={modalContent.onCancel}
+      />
     </div>
   );
 }
+
