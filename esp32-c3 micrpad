@@ -1,0 +1,62 @@
+// Firmware for Seeed Studio XIAO ESP32-C3 (USB + BLE HID)
+// Core: Tap vs Hold, Layers, JSON keymap loading
+
+#include <Arduino.h>
+#include <TinyUSB_Mouse_Keyboard.h>
+#include <NimBLEDevice.h>
+#include <SPIFFS.h>
+#include <ArduinoJson.h>
+
+#define MATRIX_ROWS 3
+#define MATRIX_COLS 3
+
+struct KeyAction {
+  String type; // "simple", "dual"
+  String tap;
+  String hold;
+};
+
+KeyAction keymap[MATRIX_ROWS][MATRIX_COLS];
+
+void loadKeymap() {
+  File file = SPIFFS.open("/keymap.json", "r");
+  if (!file) {
+    Serial.println("Failed to open keymap.json");
+    return;
+  }
+
+  DynamicJsonDocument doc(2048);
+  DeserializationError error = deserializeJson(doc, file);
+  if (error) {
+    Serial.println("Failed to parse keymap.json");
+    return;
+  }
+
+  for (int r = 0; r < MATRIX_ROWS; r++) {
+    for (int c = 0; c < MATRIX_COLS; c++) {
+      JsonObject key = doc["layers"]["default"][r][c];
+      keymap[r][c].type = key["type"].as<String>();
+      keymap[r][c].tap = key["tap"].as<String>();
+      keymap[r][c].hold = key["hold"].as<String>();
+    }
+  }
+  file.close();
+  Serial.println("Keymap loaded.");
+}
+
+void setup() {
+  Serial.begin(115200);
+  if (!SPIFFS.begin(true)) {
+    Serial.println("SPIFFS mount failed");
+    return;
+  }
+  loadKeymap();
+
+  TinyUSB_Keyboard.begin();
+  // TODO: Init matrix scanning and BLE HID
+}
+
+void loop() {
+  // TODO: Scan matrix and check tap vs hold logic
+  // Use TinyUSB_Keyboard.write() or BLE HID here
+}
