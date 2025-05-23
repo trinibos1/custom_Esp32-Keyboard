@@ -1,0 +1,515 @@
+import React, { useState, useEffect, useCallback } from "react";
+
+// Restructured presets to include both combo and description
+const presets = {
+  "BASIC": [
+    { combo: "M", description: "Move" },
+    { combo: "V", description: "Via" },
+    { combo: "R", description: "Rotate" },
+    { combo: "Del", description: "Delete" },
+    { combo: "Ctrl+Z", description: "Undo" },
+    { combo: "Ctrl+Y", description: "Redo" },
+    { combo: "F1", description: "Help" },
+    { combo: "F2", description: "Rename" },
+    { combo: "F3", description: "Search" },
+    { combo: "L", description: "Line" },
+    { combo: "E", description: "Extrude" },
+    { combo: "P", description: "Project" },
+    { combo: "C", description: "Circle" },
+    { combo: "Q", description: "Press/Pull" },
+    { combo: "X", description: "Cut" },
+    { combo: "S", description: "Sketch" },
+    { combo: "T", description: "Text" },
+    { combo: "Ctrl+C", description: "Copy" },
+    { combo: "Ctrl+V", description: "Paste" },
+    { combo: "Ctrl+Z", description: "Undo" }, // Duplicate, but kept for consistency with original presets
+    { combo: "Ctrl+X", description: "Cut" }, // Duplicate, but kept for consistency with original presets
+    { combo: "Ctrl+S", description: "Save" }, // Duplicate, but kept for consistency with original presets
+    { combo: "Ctrl+Shift+G", description: "Ungroup" },
+    { combo: "Alt+Shift+B", description: "Bring to Back" },
+    { combo: "Ctrl+D", description: "Duplicate" },
+    { combo: "Ctrl+Alt+K", description: "Lock" },
+    { combo: "Ctrl+P", description: "Command Palette" },
+    { combo: "Ctrl+Shift+P", description: "Show All Commands" },
+    { combo: "Ctrl+F", description: "Find" },
+    { combo: "Alt+Shift+F", description: "Format Document" },
+  ],
+  "MEDIA": [
+    { combo: "KC_MPRV", description: "Prev Track" },
+    { combo: "KC_MNXT", description: "Next Track" },
+    { combo: "KC_MPLY", description: "Play/Pause" },
+    { combo: "KC_MUTE", description: "Mute" },
+    { combo: "KC_VOLU", description: "Volume Up" },
+    { combo: "KC_VOLD", description: "Volume Down" },
+  ],
+  "MACRO": [
+    { combo: "MACRO_1", description: "Macro 1" },
+    { combo: "MACRO_2", description: "Macro 2" },
+    { combo: "MACRO_3", description: "Macro 3" },
+  ],
+  "LAYERS": [
+    { combo: "TG(1)", description: "Toggle Layer 1" },
+    { combo: "MO(1)", description: "Momentary Layer 1" },
+    { combo: "TO(0)", description: "To Layer 0" },
+  ],
+  "SPECIAL": [
+    { combo: "KC_PWR", description: "Power" },
+    { combo: "KC_SLEP", description: "Sleep" },
+    { combo: "KC_WAKE", description: "Wake" },
+  ],
+  "QMK LIGHTING": [
+    { combo: "RGB_TOG", description: "RGB Toggle" },
+    { combo: "RGB_MOD", description: "RGB Mode" },
+    { combo: "RGB_HUI", description: "Hue Inc" },
+    { combo: "RGB_HUD", description: "Hue Dec" },
+    { combo: "RGB_SAI", description: "Sat Inc" },
+    { combo: "RGB_SAD", description: "Sat Dec" },
+    { combo: "RGB_VAI", description: "Val Inc" },
+    { combo: "RGB_VAD", description: "Val Dec" },
+  ]
+};
+
+// Initial grid where all cells are null, indicating an unconfigured state
+const initialGrid = Array(3).fill().map(() => Array(3).fill({ tap: null, hold: null }));
+
+// Modal component for displaying messages
+const Modal = ({ show, title, message, onClose }) => {
+  if (!show) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+      <div className="bg-zinc-800 text-white p-6 rounded-lg shadow-xl max-w-sm w-full border-2 border-red-500">
+        <h3 className="text-xl font-bold mb-4 text-red-400">{title}</h3>
+        {message && <p className="mb-4">{message}</p>}
+        <div className="flex justify-end">
+          <button
+            onClick={onClose}
+            className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-xl shadow-lg transition-colors duration-200"
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default function App() { // Changed function name to App for default export
+  const [keymap, setKeymap] = useState(initialGrid);
+  const [shortcutPool, setShortcutPool] = useState(Object.fromEntries(Object.entries(presets).map(([k, v]) => [k, [...v]])));
+  const [showModal, setShowModal] = useState(false);
+  const [modalContent, setModalContent] = useState({ title: "", message: "" });
+  const [draggedShortcut, setDraggedShortcut] = useState(null); // To store the shortcut being dragged from the pool
+  const [activeTab, setActiveTab] = useState('keymap'); // State for sidebar navigation
+  const [jsonInput, setJsonInput] = useState(''); // State for JSON input in settings
+
+  // State for Key Tester
+  const [pressedKeys, setPressedKeys] = useState([]);
+
+  // State for Macros
+  const [macros, setMacros] = useState([
+    { id: 1, name: "Hello World", sequence: "Hello World!" },
+    { id: 2, name: "Signature", sequence: "John Doe\nSoftware Engineer" },
+  ]);
+  const [nextMacroId, setNextMacroId] = useState(3);
+
+  // State for Potentiometer configuration
+  const [potentiometerConfig, setPotentiometerConfig] = useState({
+    enabled: false,
+    pin: 34, // Default analog pin for ESP32
+    function: 'volume', // 'volume', 'scroll', 'custom'
+    customAction: '' // For custom QMK keycode
+  });
+
+  // Custom scrollbar for modal options (though options are removed from modal, keeping for general styling)
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 8px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: #3f3f46; /* zinc-700 */
+        border-radius: 10px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #ef4444; /* red-500 */
+        border-radius: 10px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #dc2626; /* red-600 */
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
+  // Load profile on component mount
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  // Key Tester Event Listeners
+  useEffect(() => {
+    if (activeTab === 'keytester') {
+      const handleKeyDown = (e) => {
+        e.preventDefault(); // Prevent default browser actions for keys
+        setPressedKeys(prev => {
+          const newKey = { key: e.key, code: e.code, timestamp: Date.now() };
+          // Only add if not already pressed, or if it's a new press after release
+          if (!prev.some(k => k.code === e.code && k.type === 'down')) {
+            return [...prev, { ...newKey, type: 'down' }];
+          }
+          return prev;
+        });
+      };
+
+      const handleKeyUp = (e) => {
+        e.preventDefault(); // Prevent default browser actions for keys
+        setPressedKeys(prev => prev.filter(k => k.code !== e.code));
+      };
+
+      window.addEventListener('keydown', handleKeyDown);
+      window.addEventListener('keyup', handleKeyUp);
+
+      return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+        window.removeEventListener('keyup', handleKeyUp);
+      };
+    } else {
+      setPressedKeys([]); // Clear pressed keys when not in key tester tab
+    }
+  }, [activeTab]);
+
+  // Check if the keymap is empty (all cells are null)
+  const isKeymapEmpty = keymap.flat().every(cell => cell.tap === null && cell.hold === null);
+
+  // Handles dropping a draggable item onto a keymap cell
+  const handleDrop = (e, row, col) => {
+    e.preventDefault();
+    const data = e.dataTransfer.getData("text/plain");
+
+    const updatedKeymap = [...keymap];
+
+    try {
+      const droppedItem = JSON.parse(data);
+
+      if (droppedItem.isKeymapCell) {
+        // This is a keymap cell being dragged (reordering)
+        const sourceRow = droppedItem.sourceRow;
+        const sourceCol = droppedItem.sourceCol;
+
+        // Swap the cells
+        const tempCell = updatedKeymap[row][col];
+        updatedKeymap[row][col] = droppedItem.cell;
+        updatedKeymap[sourceRow][sourceCol] = tempCell;
+      } else {
+        // This is a shortcut from the pool being dragged (assigning)
+        updatedKeymap[row][col] = { tap: droppedItem, hold: null }; // Store the full shortcut object
+      }
+      setKeymap(updatedKeymap);
+    } catch (error) {
+      console.error("Failed to parse dropped data:", error);
+      // Fallback for plain text if JSON parsing fails (e.g., old drag data)
+      updatedKeymap[row][col] = { tap: { combo: data, description: data }, hold: null };
+      setKeymap(updatedKeymap);
+    }
+    setDraggedShortcut(null); // Clear the dragged shortcut after drop
+  };
+
+  // Handles starting a drag operation from a keymap cell
+  const handleKeymapDragStart = (e, cell, row, col) => {
+    // Store the entire cell object and its original position
+    const dragData = JSON.stringify({ isKeymapCell: true, cell: cell, sourceRow: row, sourceCol: col });
+    e.dataTransfer.setData("text/plain", dragData);
+  };
+
+  // Handles starting a drag operation from a shortcut pool item
+  const handleShortcutDragStart = (e, shortcut) => {
+    // Store the entire shortcut object (combo and description)
+    e.dataTransfer.setData("text/plain", JSON.stringify(shortcut));
+    setDraggedShortcut(shortcut); // Store the shortcut being dragged
+  };
+
+  // Handles drag end for visual feedback
+  const handleDragEnd = () => {
+    setDraggedShortcut(null); // Clear the dragged shortcut on drag end
+  };
+
+  const saveProfile = () => {
+    const profileData = {
+      keymap: keymap,
+      potentiometerConfig: potentiometerConfig,
+      macros: macros // Save macros as well
+    };
+    localStorage.setItem("trkey_profile", JSON.stringify(profileData));
+    setModalContent({
+      title: "Profile Saved",
+      message: "Profile saved to browser storage."
+    });
+    setShowModal(true);
+  };
+
+  const loadProfile = () => {
+    const saved = localStorage.getItem("trkey_profile");
+    if (saved) {
+      const profileData = JSON.parse(saved);
+      setKeymap(profileData.keymap || initialGrid);
+      setPotentiometerConfig(profileData.potentiometerConfig || { enabled: false, pin: 34, function: 'volume', customAction: '' });
+      setMacros(profileData.macros || []);
+      setModalContent({
+        title: "Profile Loaded",
+        message: "Profile loaded successfully."
+      });
+    } else {
+      setModalContent({
+        title: "No Profile Found",
+        message: "No saved profile found."
+      });
+    }
+    setShowModal(true);
+  };
+
+  // Update preset now takes app, index, and the new shortcut object {combo, description}
+  const updatePreset = (app, index, newShortcut) => {
+    const newPool = { ...shortcutPool };
+    newPool[app][index] = newShortcut;
+    setShortcutPool(newPool);
+  };
+
+  const exportKeymap = () => {
+    const fullMap = {
+      layout: "3x3",
+      layers: {
+        default: keymap.map(row => row.map(cell => ({
+          tap: cell.tap ? cell.tap.combo : "", // Export only the combo
+          hold: cell.hold ? cell.hold.combo : ""
+        }))),
+      },
+      peripherals: {
+        potentiometers: [
+          potentiometerConfig.enabled ? {
+            pin: potentiometerConfig.pin,
+            function: potentiometerConfig.function,
+            customAction: potentiometerConfig.customAction
+          } : null
+        ].filter(Boolean) // Remove null if not enabled
+      },
+      macros: macros.map(m => ({ name: m.name, sequence: m.sequence }))
+    };
+    const blob = new Blob([JSON.stringify(fullMap, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "trkey_config.json";
+    a.click();
+    setModalContent({
+      title: "Export Successful",
+      message: "Configuration exported as trkey_config.json."
+    });
+    setShowModal(true);
+  };
+
+  const uploadToDevice = async () => {
+    try {
+      // Check for Web Serial API support
+      if ('serial' in navigator) {
+        const port = await navigator.serial.requestPort();
+        await port.open({ baudRate: 115200 });
+        const writer = port.writable.getWriter();
+        const fullMap = {
+          layout: "3x3",
+          layers: {
+            default: keymap.map(row => row.map(cell => ({
+              tap: cell.tap ? cell.tap.combo : "", // Export only the combo
+              hold: cell.hold ? cell.hold.combo : ""
+            }))),
+          },
+          peripherals: {
+            potentiometers: [
+              potentiometerConfig.enabled ? {
+                pin: potentiometerConfig.pin,
+                function: potentiometerConfig.function,
+                customAction: potentiometerConfig.customAction
+              } : null
+            ].filter(Boolean)
+          },
+          macros: macros.map(m => ({ name: m.name, sequence: m.sequence }))
+        };
+        const json = JSON.stringify(fullMap);
+        const encoder = new TextEncoder();
+        await writer.write(encoder.encode(json));
+        writer.releaseLock();
+        await port.close();
+        setModalContent({
+          title: "Upload Successful",
+          message: "Configuration uploaded successfully!"
+        });
+      } else {
+        setModalContent({
+          title: "Web Serial API Not Supported",
+          message: "Your browser does not support the Web Serial API. Please use a Chromium-based browser (e.g., Chrome, Edge) to upload to device."
+        });
+      }
+    } catch (err) {
+      setModalContent({
+        title: "Upload Failed",
+        message: "Failed to upload: " + err.message
+      });
+    } finally {
+      setShowModal(true);
+    }
+  };
+
+  const loadJsonFromTextArea = () => {
+    try {
+      const parsedJson = JSON.parse(jsonInput);
+      if (parsedJson.layers && parsedJson.layers.default) {
+        const newKeymap = parsedJson.layers.default.map(row =>
+          row.map(combo => {
+            const foundPreset = Object.values(presets).flat().find(p => p.combo === combo);
+            return {
+              tap: combo ? { combo: combo, description: foundPreset ? foundPreset.description : combo } : null,
+              hold: null
+            };
+          })
+        );
+        const finalKeymap = Array(3).fill().map((_, rIdx) =>
+          Array(3).fill().map((_, cIdx) =>
+            newKeymap[rIdx] && newKeymap[rIdx][cIdx] ? newKeymap[rIdx][cIdx] : { tap: null, hold: null }
+          )
+        );
+        setKeymap(finalKeymap);
+
+        // Load potentiometer config if present
+        if (parsedJson.peripherals && parsedJson.peripherals.potentiometers && parsedJson.peripherals.potentiometers.length > 0) {
+          const loadedPot = parsedJson.peripherals.potentiometers[0];
+          setPotentiometerConfig({
+            enabled: true,
+            pin: loadedPot.pin || 34,
+            function: loadedPot.function || 'volume',
+            customAction: loadedPot.customAction || ''
+          });
+        } else {
+            setPotentiometerConfig({ enabled: false, pin: 34, function: 'volume', customAction: '' });
+        }
+
+        // Load macros if present
+        if (parsedJson.macros && Array.isArray(parsedJson.macros)) {
+            setMacros(parsedJson.macros.map((m, idx) => ({ id: idx + 1, name: m.name, sequence: m.sequence })));
+            setNextMacroId(parsedJson.macros.length + 1);
+        } else {
+            setMacros([]);
+            setNextMacroId(1);
+        }
+
+
+        setModalContent({
+          title: "JSON Loaded",
+          message: "Configuration loaded from text area successfully."
+        });
+      } else {
+        setModalContent({
+          title: "Invalid JSON",
+          message: "The pasted JSON does not contain a valid 'layers.default' structure."
+        });
+      }
+    } catch (error) {
+      setModalContent({
+        title: "JSON Parsing Error",
+        message: "Failed to parse JSON: " + error.message
+      });
+    } finally {
+      setShowModal(true);
+    }
+  };
+
+  // Macro functions
+  const addMacro = () => {
+    const name = prompt("Enter macro name:");
+    if (!name) return;
+    const sequence = prompt("Enter macro sequence (e.g., 'Hello World!'):");
+    if (sequence) {
+      setMacros(prev => [...prev, { id: nextMacroId, name, sequence }]);
+      setNextMacroId(prev => prev + 1);
+    }
+  };
+
+  const editMacro = (id) => {
+    const macroToEdit = macros.find(m => m.id === id);
+    if (!macroToEdit) return;
+
+    const newName = prompt(`Edit name for "${macroToEdit.name}":`, macroToEdit.name);
+    if (newName === null) return; // User cancelled
+
+    const newSequence = prompt(`Edit sequence for "${macroToEdit.name}":`, macroToEdit.sequence);
+    if (newSequence === null) return; // User cancelled
+
+    setMacros(prev => prev.map(m =>
+      m.id === id ? { ...m, name: newName, sequence: newSequence } : m
+    ));
+  };
+
+  const deleteMacro = (id) => {
+    // Replaced window.confirm with a custom modal for consistency and better UX
+    setModalContent({
+      title: "Confirm Delete",
+      message: "Are you sure you want to delete this macro?",
+      onConfirm: () => {
+        setMacros(prev => prev.filter(m => m.id !== id));
+        setShowModal(false); // Close modal after action
+      },
+      onCancel: () => setShowModal(false) // Close modal on cancel
+    });
+    setShowModal(true);
+  };
+
+  // Custom Modal for confirmation (replaces window.confirm)
+  const ConfirmationModal = ({ show, title, message, onConfirm, onCancel }) => {
+    if (!show) return null;
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+        <div className="bg-zinc-800 text-white p-6 rounded-lg shadow-xl max-w-sm w-full border-2 border-red-500">
+          <h3 className="text-xl font-bold mb-4 text-red-400">{title}</h3>
+          {message && <p className="mb-4">{message}</p>}
+          <div className="flex justify-end space-x-4">
+            <button
+              onClick={onCancel}
+              className="bg-zinc-600 hover:bg-zinc-700 px-4 py-2 rounded-xl shadow-lg transition-colors duration-200"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={onConfirm}
+              className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-xl shadow-lg transition-colors duration-200"
+            >
+              Confirm
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+
+  return (
+    <div className="min-h-screen bg-zinc-800 text-white flex font-inter">
+      {/* Sidebar */}
+      <div className="w-64 bg-zinc-900 p-6 flex flex-col border-r border-zinc-700 shadow-xl">
+        <div className="text-2xl font-bold text-red-500 mb-8">Trkey</div>
+        <nav className="flex-grow">
+          <ul className="space-y-4">
+            <li>
+              <a href="#" onClick={() => setActiveTab('keymap')} className={`flex items-center ${activeTab === 'keymap' ? 'text-red-300' : 'text-zinc-400'} hover:text-red-500 font-semibold text-lg transition-colors duration-200`}>
+                <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>
+                KEYMAP
+              </a>
+            </li>
+            <li>
+              <a href="#" onClick={() => setActiveTab('macros')} className={`flex items-center ${activeTab === 'macros' ? 'text-red-300' : 'text-zinc-400'} hover:text-white transition-colors duration-200`}>
+                <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20"><path d="M12 6.293V4a1 1 0 00-1-1H5a1 1 0 00-1 1v10a1 1 0 001 1h6a1 1 0 001-1v-2.293l1.707 1.707a1 1 0 001.414-1.414l-4-4a1 1 0 00-1.414 0l-4 4a1 1 0 001.414 1.414L10 10.414V12a1 1 0 001 1h2a1 1 0 001-1V8.293l1.707 1.707a1 1 0 001.414-1.414l-4-4z"></path></svg>
+                MACROS
+              </a>
+    
