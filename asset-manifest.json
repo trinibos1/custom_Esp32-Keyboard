@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/custom_Keyboard/static/css/main.1aa61b5e.css",
+    "main.css": "/custom_Keyboard/static/css/main.20303a3c.css",
     "main.js": "/custom_Keyboard/static/js/main.77074dbc.js",
     "index.html": "/custom_Keyboard/index.html",
-    "main.1aa61b5e.css.map": "/custom_Keyboard/static/css/main.1aa61b5e.css.map",
+    "main.20303a3c.css.map": "/custom_Keyboard/static/css/main.20303a3c.css.map",
     "main.77074dbc.js.map": "/custom_Keyboard/static/js/main.77074dbc.js.map"
   },
   "entrypoints": [
-    "static/css/main.1aa61b5e.css",
+    "static/css/main.20303a3c.css",
     "static/js/main.77074dbc.js"
   ]
 }
