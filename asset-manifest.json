@@ -1,0 +1,12 @@
+{
+  "files": {
+    "main.css": "/custom_Keyboard/static/css/main.31d6cfe0.css",
+    "main.js": "/custom_Keyboard/static/js/main.77074dbc.js",
+    "index.html": "/custom_Keyboard/index.html",
+    "main.77074dbc.js.map": "/custom_Keyboard/static/js/main.77074dbc.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.31d6cfe0.css",
+    "static/js/main.77074dbc.js"
+  ]
+}
