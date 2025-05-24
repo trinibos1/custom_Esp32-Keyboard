@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 Trkey Micropad Configurator
 This is a web-based configurator for Trkey micropads, designed to allow users to easily define and manage keymaps for their custom 3x3 micropads using an intuitive interface.
 
