@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/trinibos1/custom_Keyboard/static/css/main.e6c13ad2.css",
+    "main.js": "/trinibos1/custom_Keyboard/static/js/main.9fea4dba.js",
+    "index.html": "/trinibos1/custom_Keyboard/index.html",
+    "main.e6c13ad2.css.map": "/trinibos1/custom_Keyboard/static/css/main.e6c13ad2.css.map",
+    "main.9fea4dba.js.map": "/trinibos1/custom_Keyboard/static/js/main.9fea4dba.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.e6c13ad2.css",
+    "static/js/main.9fea4dba.js"
+  ]
+}
