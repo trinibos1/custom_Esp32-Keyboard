@@ -1,10 +1,10 @@
 {
   "files": {
-    "main.css": "/trinibos1/custom_Keyboard/static/css/main.cf890fdb.css",
-    "main.js": "/trinibos1/custom_Keyboard/static/js/main.2f719f05.js",
-    "index.html": "/trinibos1/custom_Keyboard/index.html",
-    "main.cf890fdb.css.map": "/trinibos1/custom_Keyboard/static/css/main.cf890fdb.css.map",
-    "main.2f719f05.js.map": "/trinibos1/custom_Keyboard/static/js/main.2f719f05.js.map"
+    "main.css": "/custom_Keyboard/static/css/main.cf890fdb.css",
+    "main.js": "/custom_Keyboard/static/js/main.2f719f05.js",
+    "index.html": "/custom_Keyboard/index.html",
+    "main.cf890fdb.css.map": "/custom_Keyboard/static/css/main.cf890fdb.css.map",
+    "main.2f719f05.js.map": "/custom_Keyboard/static/js/main.2f719f05.js.map"
   },
   "entrypoints": [
     "static/css/main.cf890fdb.css",
