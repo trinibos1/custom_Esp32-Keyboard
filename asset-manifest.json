@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/custom_Keyboard/static/css/main.92c8d4eb.css",
+    "main.js": "/custom_Keyboard/static/js/main.9b5196bf.js",
+    "index.html": "/custom_Keyboard/index.html",
+    "main.92c8d4eb.css.map": "/custom_Keyboard/static/css/main.92c8d4eb.css.map",
+    "main.9b5196bf.js.map": "/custom_Keyboard/static/js/main.9b5196bf.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.92c8d4eb.css",
+    "static/js/main.9b5196bf.js"
+  ]
+}
