@@ -1,13 +1,15 @@
 {
   "files": {
-    "main.css": "/custom_Keyboard/static/css/main.92c8d4eb.css",
-    "main.js": "/custom_Keyboard/static/js/main.9b5196bf.js",
+    "main.css": "/custom_Keyboard/static/css/main.3957902f.chunk.css",
+    "main.js": "/custom_Keyboard/static/js/main.59b89af1.chunk.js",
+    "main.js.map": "/custom_Keyboard/static/js/main.59b89af1.chunk.js.map",
+    "runtime~main.js": "/custom_Keyboard/static/js/runtime~main.5e4878a8.js",
+    "runtime~main.js.map": "/custom_Keyboard/static/js/runtime~main.5e4878a8.js.map",
+    "static/js/2.f25ce426.chunk.js": "/custom_Keyboard/static/js/2.f25ce426.chunk.js",
+    "static/js/2.f25ce426.chunk.js.map": "/custom_Keyboard/static/js/2.f25ce426.chunk.js.map",
     "index.html": "/custom_Keyboard/index.html",
-    "main.92c8d4eb.css.map": "/custom_Keyboard/static/css/main.92c8d4eb.css.map",
-    "main.9b5196bf.js.map": "/custom_Keyboard/static/js/main.9b5196bf.js.map"
-  },
-  "entrypoints": [
-    "static/css/main.92c8d4eb.css",
-    "static/js/main.9b5196bf.js"
-  ]
+    "precache-manifest.67fe9955d75f44bb88a9d4216cbbc581.js": "/custom_Keyboard/precache-manifest.67fe9955d75f44bb88a9d4216cbbc581.js",
+    "service-worker.js": "/custom_Keyboard/service-worker.js",
+    "static/css/main.3957902f.chunk.css.map": "/custom_Keyboard/static/css/main.3957902f.chunk.css.map"
+  }
 }
