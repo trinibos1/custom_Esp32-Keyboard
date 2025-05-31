@@ -230,7 +230,7 @@
             );
         };
 
-        const MacroFormModal = ({ show, onClose, onSave, macro, language }) => {
+        const MacroFormModal = ({ show, onClose, onSave, macro, language, setModalContent, setShowModal }) => {
             const [name, setName] = useState('');
             const [sequence, setSequence] = useState('');
 
@@ -337,7 +337,7 @@
             );
         };
 
-        const AddShortcutModal = ({ show, onClose, onSave, shortcut, language }) => {
+        const AddShortcutModal = ({ show, onClose, onSave, shortcut, language, setModalContent, setShowModal }) => {
             const [name, setName] = useState('');
             const [combo, setCombo] = useState('');
 
@@ -720,7 +720,8 @@
                             message: "Keymap, macros, and shortcuts imported successfully."
                         });
                         setShowModal(true);
-                    } catch (error) {
+                    }
+                    catch (error) {
                         setModalContent({
                             title: translations.invalidJsonTitle[language],
                             message: translations.invalidJsonMessage[language] + ` (${error.message})`
@@ -1144,6 +1145,8 @@
                         onSave={handleSaveMacro}
                         macro={editingMacro} // Pass the macro object if editing
                         language={language} // Pass language to modal
+                        setModalContent={setModalContent} // Pass setModalContent
+                        setShowModal={setShowModal}     // Pass setShowModal
                     />
 
                     {/* Confirmation Modal for deleting macros / resetting keymap */}
@@ -1161,6 +1164,8 @@
                         onClose={() => setShowAddShortcutModal(false)}
                         onSave={handleSaveNewShortcut}
                         language={language} // Pass language to modal
+                        setModalContent={setModalContent} // Pass setModalContent
+                        setShowModal={setShowModal}     // Pass setShowModal
                     />
                 </div>
             );
