@@ -1,0 +1,2702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trkey Keymap Configurator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom scrollbar for the shortcut pool */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+    </style>
+</head>
+<body class="bg-zinc-800 text-white">
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // React and ReactDOM are now globally available from the CDN scripts loaded above.
+        const { useState, useEffect, useCallback, useRef } = React;
+        // ReactDOM is also globally available as ReactDOM
+
+        // This array defines all common keyboard buttons as shortcut options for the Trkey Keymap Configurator.
+        // Each object contains:
+        // - name: A human-readable label for the button.
+        // - combo: The string representation that matches the firmware's sendCombo function.
+        // This list is comprehensive and covers alphanumeric, symbol, function, navigation, modifier, numpad, and media keys.
+        const allKeyboardButtons = [
+            // --- Alphanumeric & Basic Punctuation ---
+            { name: 'A', combo: 'A' }, { name: 'B', combo: 'B' }, { name: 'C', combo: 'C' },
+            { name: 'D', combo: 'D' }, { name: 'E', combo: 'E' }, { name: 'F', combo: 'F' },
+            { name: 'G', combo: 'G' }, { name: 'H', combo: 'H' }, { name: 'I', combo: 'I' },
+            { name: 'J', combo: 'J' }, { name: 'K', combo: 'K' }, { name: 'L', combo: 'L' },
+            { name: 'M', combo: 'M' }, { name: 'N', combo: 'N' }, { name: 'O', combo: 'O' },
+            { name: 'P', combo: 'P' }, { name: 'Q', combo: 'Q' }, { name: 'R', combo: 'R' },
+            { name: 'S', combo: 'S' }, { name: 'T', combo: 'T' }, { name: 'U', combo: 'U' },
+            { name: 'V', combo: 'V' }, { name: 'W', combo: 'W' }, { name: 'X', combo: 'X' },
+            { name: 'Y', combo: 'Y' }, { name: 'Z', combo: 'Z' },
+
+            { name: '0', combo: '0' }, { name: '1', combo: '1' }, { name: '2', combo: '2' },
+            { name: '3', combo: '3' }, { name: '4', combo: '4' }, { name: '5', combo: '5' },
+            { name: '6', combo: '6' }, { name: '7', combo: '7' }, { name: '8', combo: '8' },
+            { name: '9', combo: '9' },
+
+            { name: 'Space', combo: 'SPACE' },
+            { name: '-', combo: '-' }, { name: '=', combo: '=' },
+            { name: '[', combo: '[' }, { name: ']', combo: ']' },
+            { name: '\\', combo: '\\' }, { name: ';', combo: ';' },
+            { name: '\'', combo: '\'' }, { name: ',', combo: ',' },
+            { name: '.', combo: '.' }, { name: '/', combo: '/' },
+            { name: '`', combo: '`' }, // Tilde/backtick key
+
+            // --- Modifiers & Special Keys ---
+            { name: 'Enter', combo: 'ENTER' },
+            { name: 'Tab', combo: 'TAB' },
+            { name: 'Esc', combo: 'ESC' },
+            { name: 'Backspace', combo: 'BACKSPACE' },
+            { name: 'Caps Lock', combo: 'CAPSLOCK' },
+            { name: 'Print Screen', combo: 'PRINTSCREEN' },
+            { name: 'Scroll Lock', combo: 'SCROLLLOCK' },
+            { name: 'Pause', combo: 'PAUSE' },
+            { name: 'Left Ctrl', combo: 'LCTRL' }, { name: 'Right Ctrl', combo: 'RCTRL' },
+            { name: 'Left Shift', combo: 'LSHIFT' }, { name: 'Right Shift', combo: 'RSHIFT' },
+            { name: 'Left Alt', combo: 'LALT' }, { name: 'Right Alt', combo: 'RALT' },
+            { name: 'Left GUI/Win/Cmd', combo: 'LGUI' }, { name: 'Right GUI/Win/Cmd', combo: 'RGUI' },
+            { name: 'Application', combo: 'APPLICATION' }, // Context Menu key
+            { name: 'Power', combo: 'POWER' },
+
+            // --- Navigation Keys ---
+            { name: 'Up Arrow', combo: 'UP' },
+            { name: 'Down Arrow', combo: 'DOWN' },
+            { name: 'Left Arrow', combo: 'LEFT' },
+            { name: 'Right Arrow', combo: 'RIGHT' },
+            { name: 'Home', combo: 'HOME' },
+            { name: 'End', combo: 'END' },
+            { name: 'Page Up', combo: 'PAGEUP' },
+            { name: 'Page Down', combo: 'PAGEDOWN' },
+            { name: 'Insert', combo: 'INSERT' },
+            { name: 'Delete', combo: 'DELETE' },
+
+            // --- Function Keys ---
+            { name: 'F1', combo: 'F1' }, { name: 'F2', combo: 'F2' }, { name: 'F3', combo: 'F3' },
+            { name: 'F4', combo: 'F4' }, { name: 'F5', combo: 'F5' }, { name: 'F6', combo: 'F6' },
+            { name: 'F7', combo: 'F7' }, { name: 'F8', combo: 'F8' }, { name: 'F9', combo: 'F9' },
+            { name: 'F10', combo: 'F10' }, { name: 'F11', combo: 'F11' }, { name: 'F12', combo: 'F12' },
+            { name: 'F13', combo: 'F13' }, { name: 'F14', combo: 'F14' }, { name: 'F15', combo: 'F15' },
+            { name: 'F16', combo: 'F16' }, { name: 'F17', combo: 'F17' }, { name: 'F18', combo: 'F18' },
+            { name: 'F19', combo: 'F19' }, { name: 'F20', combo: 'F20' }, { name: 'F21', combo: 'F21' },
+            { name: 'F22', combo: 'F22' }, { name: 'F23', combo: 'F23' }, { name: 'F24', combo: 'F24' },
+
+            // --- Numpad Keys ---
+            { name: 'Num Lock', combo: 'NUMLOCK' },
+            { name: 'KP /', combo: 'KPSLASH' },
+            { name: 'KP *', combo: 'KPASTERISK' },
+            { name: 'KP -', combo: 'KPMINUS' },
+            { name: 'KP +', combo: 'KPPLUS' },
+            { name: 'KP Enter', combo: 'KPENTER' },
+            { name: 'KP 1', combo: 'KP1' }, { name: 'KP 2', combo: 'KP2' }, { name: 'KP 3', combo: 'KP3' },
+            { name: 'KP 4', combo: 'KP4' }, { name: 'KP 5', combo: 'KP5' }, { name: 'KP 6', combo: 'KP6' },
+            { name: 'KP 7', combo: 'KP7' }, { name: 'KP 8', combo: 'KP8' }, { name: 'KP 9', combo: 'KP9' },
+            { name: 'KP 0', combo: 'KP0' },
+            { name: 'KP .', combo: 'KPDOT' },
+            { name: 'KP =', combo: 'KPEQUAL' },
+
+            // --- Media Keys ---
+            { name: 'Mute', combo: 'MUTE' },
+            { name: 'Volume Up', combo: 'VOLUP' },
+            { name: 'Volume Down', combo: 'VOLDOWN' },
+            { name: 'Play/Pause', combo: 'PLAYPAUSE' },
+            { name: 'Next Track', combo: 'NEXTTRACK' },
+            { name: 'Previous Track', combo: 'PREVTRACK' },
+            { name: 'Brightness Up', combo: 'BRIGHTNESSUP' },
+            { name: 'Brightness Down', combo: 'BRIGHTNESSDOWN' },
+
+            // --- Non-US Specific Keys (common on some layouts) ---
+            { name: 'Non-US Hash', combo: 'NONUSHASH' },
+            { name: 'Non-US Backslash', combo: 'NONUSBACKSLASH' },
+
+            // --- Layer Switching (Example) ---
+            { name: 'Layer 0', combo: 'LAYER+0' },
+            { name: 'Layer 1', combo: 'LAYER+1' },
+            { name: 'Layer 2', combo: 'LAYER+2' },
+            { name: 'Layer 3', combo: 'LAYER+3' },
+            { name: 'Layer 4', combo: 'LAYER+4' },
+        ];
+
+
+        // --- START OF PRESETS DATA ---
+        const presets = {
+            "BASIC": [
+                { combo: "M", description: "Move" },
+                { combo: "V", description: "Via" },
+                { combo: "R", description: "Rotate" },
+                { combo: "Del", description: "Delete" },
+                { combo: "Ctrl+Z", description: "Undo" },
+                { combo: "Ctrl+Y", "description": "Redo" },
+                { combo: "F1", description: "Help" },
+                { combo: "F2", description: "Rename" },
+                { combo: "F3", description: "Search" },
+                { combo: "L", description: "Line" },
+                { combo: "E", description: "Extrude" },
+                { combo: "P", description: "Project" },
+                { combo: "C", description: "Circle" },
+                { combo: "Q", description: "Press/Pull" },
+                { combo: "X", description: "Cut" },
+                { combo: "S", description: "Sketch" },
+                { combo: "T", description: "Text" },
+                { combo: "Ctrl+C", description: "Copy" },
+                { combo: "Ctrl+V", description: "Paste" },
+                { combo: "Ctrl+Z", description: "Undo" },
+                { combo: "Ctrl+X", description: "Cut" },
+                { combo: "Ctrl+S", description: "Save" },
+                { combo: "Ctrl+Shift+G", description: "Ungroup" },
+                { combo: "Alt+Shift+B", description: "Bring to Back" },
+                { combo: "Ctrl+D", description: "Duplicate" },
+                { combo: "Ctrl+Alt+K", description: "Lock" },
+                { combo: "Ctrl+P", description: "Command Palette" },
+                { combo: "Ctrl+Shift+P", description: "Show All Commands" },
+                { combo: "Ctrl+F", description: "Find" },
+                { combo: "Alt+Shift+F", description: "Format Document" },
+            ],
+            "STANDARD_KEYS": allKeyboardButtons, // Add all keyboard buttons as a new preset category
+            "WINDOWS_SHORTCUTS": [
+                { combo: "Win+D", description: "Show Desktop" },
+                { combo: "Win+E", description: "Open File Explorer" },
+                { combo: "Win+L", description: "Lock Screen" },
+                { combo: "Win+Tab", description: "Task View" },
+                { combo: "Alt+F4", description: "Close App/Shutdown" },
+                { combo: "Ctrl+Shift+Esc", description: "Open Task Manager" },
+                { combo: "Win+PrintScreen", description: "Screenshot to File" },
+                { combo: "Win+.", description: "Emoji Panel" },
+                { combo: "Win+Shift+S", description: "Snip & Sketch" },
+            ],
+            "MACOS_SHORTCUTS": [
+                { combo: "Cmd+Space", description: "Spotlight Search" },
+                { combo: "Cmd+C", description: "Copy" },
+                { combo: "Cmd+V", description: "Paste" },
+                { combo: "Cmd+Z", description: "Undo" },
+                { combo: "Cmd+X", description: "Cut" },
+                { combo: "Cmd+S", description: "Save" },
+                { combo: "Cmd+Q", description: "Quit App" },
+                { combo: "Cmd+W", description: "Close Window" },
+                { combo: "Cmd+Tab", description: "Switch Apps" },
+                { combo: "Cmd+Shift+3", description: "Screenshot Full" },
+                { combo: "Cmd+Shift+4", description: "Screenshot Selection" },
+            ],
+            "LINUX_SHORTCUTS": [
+                { combo: "Ctrl+Alt+T", description: "Open Terminal" },
+                { combo: "Alt+Tab", description: "Switch Windows" },
+                { combo: "Ctrl+Alt+Del", description: "Logout/Shutdown Menu" },
+                { combo: "Super+D", description: "Show Desktop" }, // 'Super' typically is the Windows/Meta key
+                { combo: "Super+L", description: "Lock Screen" },
+                { combo: "Ctrl+Shift+N", description: "New Folder" },
+                { combo: "F2", description: "Rename File" },
+                { combo: "PrintScreen", description: "Screenshot" },
+                { combo: "ls", description: "List directory contents" },
+                { combo: "cd", description: "Change directory" },
+                { combo: "pwd", description: "Print working directory" },
+                { combo: "mkdir", description: "Make directory" },
+                { combo: "rm", description: "Remove file/directory" },
+                { combo: "cp", description: "Copy file" },
+                { combo: "mv", description: "Move file" },
+                { combo: "sudo", description: "Run command as superuser" },
+                { combo: "man", description: "Manual pages" },
+                { combo: "top", description: "Show running processes" },
+                { combo: "ps", description: "List processes" },
+                { combo: "kill", description: "Terminate process" },
+                { combo: "grep", description: "Search text" },
+                { combo: "chmod", description: "Change permissions" },
+                { combo: "chown", description: "Change ownership" },
+                { combo: "nano", description: "Text editor" },
+                { combo: "vim", description: "Vi Improved editor" },
+                { combo: "df", description: "Disk usage" },
+                { combo: "du", description: "Directory usage" },
+                { combo: "tar", description: "Archive files" },
+                { combo: "zip/unzip", description: "Compress/Extract" },
+                { combo: "ssh", description: "Remote access" },
+                { combo: "scp", description: "Secure copy" },
+                { combo: "wget", description: "Download files" },
+                { combo: "curl", description: "Transfer data" },
+                { combo: "alias", description: "Create shortcut command" },
+                { combo: "history", description: "Show command history" },
+                { combo: "clear", description: "Clear terminal" },
+                { combo: "reboot", description: "Restart system" },
+                { combo: "shutdown", description: "Shutdown system" },
+                { combo: "uptime", description: "Show system uptime" },
+            ],
+            "ANDROID_SHORTCUTS": [
+                { combo: "RecentApps", description: "Show Recent Apps" },
+                { combo: "Home", description: "Go Home" },
+                { combo: "Back", description: "Go Back" },
+                { combo: "VolumeUp", description: "Volume Up" },
+                { combo: "VolumeDown", description: "Volume Down" },
+                { combo: "Power", description: "Power Button" },
+                { combo: "Search", description: "Open Search" },
+                { combo: "Camera", description: "Open Camera" },
+            ],
+            "IPAD_SHORTCUTS": [
+                { combo: "Cmd+Space", description: "Search/Spotlight" },
+                { combo: "Cmd+H", description: "Go Home" },
+                { combo: "Cmd+Tab", description: "Switch Apps" },
+                { combo: "Cmd+Shift+3", description: "Screenshot Full" },
+                { combo: "Cmd+Shift+4", description: "Screenshot Selection" },
+                { combo: "Globe+C", description: "Copy (Contextual)" }, // Globe key is common on iPad keyboards
+                { combo: "Globe+V", description: "Paste (Contextual)" },
+                { combo: "Globe+Z", description: "Undo (Contextual)" },
+            ],
+            "MINECRAFT_SHORTCUTS": [
+                { combo: "W", description: "Move forward" },
+                { combo: "A", description: "Move left" },
+                { combo: "S", description: "Move backward" },
+                { combo: "D", description: "Move right" },
+                { combo: "Space", description: "Jump" },
+                { combo: "Shift", description: "Sneak" },
+                { combo: "Ctrl", description: "Sprint" },
+                { combo: "E", description: "Open inventory" },
+                { combo: "Q", description: "Drop selected item" },
+                { combo: "T", description: "Open chat" },
+                { combo: "F3+D", description: "Clear chat" },
+                { combo: "F5", description: "Change camera" },
+                { combo: "F8", description: "Smooth camera" },
+                { combo: "Tab", description: "Player list" },
+                { combo: "Esc", description: "Menu" },
+                { combo: "Middle Click", description: "Pick block (Creative)" },
+                { combo: "Double Space", description: "Fly toggle (Creative)" },
+                { combo: "Ctrl+Middle Click", description: "Copy block with NBT" },
+                { combo: "Shift+Left Click", description: "Destroy instantly (Creative)" },
+                { combo: "Shift+Right Click", description: "Edit command block (Creative)" },
+                { combo: "Shift+Click", description: "Move stack (Inventory)" },
+                { combo: "Ctrl+Q", description: "Drop stack" },
+                { combo: "Ctrl+Click", description: "Select same items" },
+                { combo: "Double Click", description: "Grab all of that item" },
+                { combo: "Mouse wheel", description: "Scroll hotbar" },
+                { combo: "Number+Hover", description: "Move item to hotbar" },
+                { combo: "F3+N", description: "Switch gamemode" },
+                { combo: "Alt+F4", description: "Rage quit" },
+                { combo: "F3+C", description: "Force crash" },
+                { combo: "F3+A", description: "Reload chunks" },
+                { combo: "Shift+Click", description: "Craft all (in recipe book)" },
+            ],
+            "WAR_THUNDER_SHORTCUTS": [
+                { combo: "W/S", description: "Throttle up/down" },
+                { combo: "A/D", description: "Rudder left/right" },
+                { combo: "Q/E", description: "Roll left/right" },
+                { combo: "Shift", description: "Afterburner" },
+                { combo: "Ctrl", description: "Air brake" },
+                { combo: "G", description: "Landing gear" },
+                { combo: "F", description: "Flaps" },
+                { combo: "V", description: "View mode" },
+                { combo: "C", description: "Free camera" },
+                { combo: "X", description: "Look left" },
+                { combo: "Z", description: "Look right" },
+                { combo: "Y", description: "Look back" },
+                { combo: "B", description: "Bomb view" },
+                { combo: "N", description: "Navigation lights" },
+                { combo: "J", description: "Bail out" },
+                { combo: "M", description: "Map" },
+                { combo: "Tab", description: "Scoreboard" },
+                { combo: "T", description: "Target" },
+                { combo: "R", description: "Radar" },
+                { combo: "H", description: "Head tracking" },
+                { combo: "Space", description: "Fire main guns" },
+                { combo: "Alt", description: "Fire secondary" },
+                { combo: "Ctrl+Space", description: "Drop bomb" },
+                { combo: "Shift+Space", description: "Fire rocket" },
+                { combo: "Mouse 2", description: "Zoom" },
+                { combo: "Mouse 1", description: "Fire guns" },
+                { combo: "Mouse 3", description: "Track enemy" },
+                { combo: "F1", description: "Help" },
+                { combo: "F2", description: "Toggle cockpit" },
+                { combo: "F3", description: "Chase camera" },
+                { combo: "W/A/S/D", description: "Drive (Tank)" },
+                { combo: "Shift", description: "Speed boost" },
+                { combo: "V", description: "Binocular view" },
+                { combo: "U", description: "Repair" },
+                { combo: "O", description: "Toggle optics" },
+                { combo: "K", description: "Thermal/IR" },
+                { combo: "L", description: "Headlights" },
+                { combo: "R", description: "Rangefinder" },
+                { combo: "C", description: "Commander cam" },
+                { combo: "X", description: "Machine gun" },
+                { combo: "Esc", description: "Menu" },
+                { combo: "Enter", description: "Chat" },
+                { combo: "Backspace", description: "Leave vehicle" },
+                { combo: "Home", description: "Reset view" },
+                { combo: "Del", description: "Zoom out" },
+                { combo: "Ins", description: "Zoom in" },
+                { combo: "Alt+F10", description: "Save replay" },
+                { combo: "Alt+PrintScreen", description: "Screenshot" },
+                { combo: "Ctrl+Y", description: "Chat channel" },
+                { combo: "Ctrl+G", description: "Gunner view" },
+            ],
+            "ROBLOX_STUDIO_SHORTCUTS": [
+                { combo: "Ctrl+S", description: "Save" },
+                { combo: "Ctrl+Shift+S", description: "Save As" },
+                { combo: "Ctrl+N", description: "New place" },
+                { combo: "Ctrl+O", description: "Open place" },
+                { combo: "Ctrl+Z", description: "Undo" },
+                { combo: "Ctrl+Y", description: "Redo" },
+                { combo: "Ctrl+C/V/X", description: "Copy/Paste/Cut" },
+                { combo: "Ctrl+D", description: "Duplicate" },
+                { combo: "Ctrl+G", description: "Group" },
+                { combo: "Ctrl+U", description: "Ungroup" },
+                { combo: "Ctrl+P", description: "Publish" },
+                { combo: "F", description: "Focus selection" },
+                { combo: "Shift+F", description: "Follow camera" },
+                { combo: "Alt+Click", description: "Select parent" },
+                { combo: "Ctrl+Click", description: "Multi-select" },
+                { combo: "Ctrl+Shift+H", description: "View explorer" },
+                { combo: "Ctrl+Shift+X", description: "Properties" },
+                { combo: "Ctrl+Shift+C", description: "Output" },
+                { combo: "Ctrl+Shift+D", description: "Asset manager" },
+                { combo: "Ctrl+Shift+E", description: "Toolbox" },
+                { combo: "W/A/S/D", description: "Camera move" },
+                { combo: "E/Q", description: "Move up/down" },
+                { combo: "T", description: "Rotate" },
+                { combo: "R", description: "Resize" },
+                { combo: "G", description: "Move" },
+                { combo: "Ctrl+T", description: "Anchor" },
+                { combo: "Ctrl+L", description: "Lock" },
+                { combo: "Ctrl+B", description: "Break joints" },
+                { combo: "Ctrl+J", description: "Join surfaces" },
+                { combo: "Ctrl+M", description: "Material" },
+                { combo: "Ctrl+Shift+M", description: "Model" },
+                { combo: "Shift+Drag", description: "Constrain" },
+                { combo: "Arrow Keys", description: "Nudge" },
+                { combo: "Ctrl+P", description: "Quick publish" },
+                { combo: "Alt+Shift+E", description: "Export" },
+                { combo: "Ctrl+S", description: "Save" },
+            ],
+            "ENLISTED_SHORTCUTS": [
+                { combo: "W/A/S/D", description: "Move" },
+                { combo: "Space", description: "Jump" },
+                { combo: "Shift", description: "Sprint" },
+                { combo: "Ctrl", description: "Crouch" },
+                { combo: "Z", description: "Prone" },
+                { combo: "X", description: "Lean left" },
+                { combo: "C", description: "Lean right" },
+                { combo: "F", description: "Interact" },
+                { combo: "R", description: "Reload" },
+                { combo: "G", description: "Grenade" },
+                { combo: "T", description: "Pick weapon" },
+                { combo: "V", description: "Melee" },
+                { combo: "B", description: "Fire mode" },
+                { combo: "Q/E", description: "Switch soldier" },
+                { combo: "Tab", description: "Scoreboard" },
+                { combo: "M", description: "Map" },
+                { combo: "N", description: "Night vision" },
+                { combo: "Y", description: "Orders" },
+                { combo: "L", description: "Flashlight" },
+                { combo: "Esc", description: "Menu" },
+                { combo: "Click", description: "Fire" },
+                { combo: "Right Click", description: "Aim" },
+                { combo: "Scroll", description: "Change weapon" },
+                { combo: "1-3", description: "Weapons" },
+                { combo: "H", description: "Help" },
+                { combo: "Alt", description: "Free look" },
+                { combo: "Ctrl+Shift", description: "Walk" },
+                { combo: "F1", description: "Camera" },
+                { combo: "Alt+M", description: "Minimap" },
+                { combo: "Ctrl+R", description: "Reload prone" },
+                { combo: "Ctrl+F1", description: "Switch class" },
+                { combo: "Alt+V", description: "Change view" },
+                { combo: "Middle Mouse", description: "Ping" },
+                { combo: "Hold T", description: "Mark enemy" },
+                { combo: "Hold Shift", description: "Sprint long" },
+                { combo: "Hold F", description: "Plant/diffuse" },
+                { combo: "Ctrl+Number", description: "Squad command" },
+                { combo: "Shift+1-4", description: "Formations" },
+                { combo: "K", description: "Kill feed" },
+                { combo: "U", description: "Medkit" },
+                { combo: "1", description: "Inventory" },
+                { combo: "Backspace", description: "Suicide" },
+                { combo: "Del", description: "Respawn" },
+                { combo: "F3", description: "Record" },
+                { combo: "F12", description: "Screenshot" },
+                { combo: "Tilde", description: "Console" },
+                { combo: "Ctrl+Alt+Delete", description: "Force quit" },
+            ],
+            "CODING_IDE_SHORTCUTS": [
+                { combo: "Ctrl+P", description: "Quick open file" },
+                { combo: "Ctrl+Shift+P", description: "Command palette" },
+                { combo: "Ctrl+`", description: "Terminal toggle" },
+                { combo: "Ctrl+B", description: "Sidebar toggle" },
+                { combo: "Ctrl+J", description: "Panel toggle" },
+                { combo: "Ctrl+Shift+E", description: "Explorer" },
+                { combo: "Ctrl+Shift+F", description: "Search in files" },
+                { combo: "Ctrl+Shift+G", description: "Git" },
+                { combo: "Ctrl+Shift+D", description: "Debug" },
+                { combo: "Ctrl+Shift+X", description: "Extensions" },
+                { combo: "Ctrl+Space", description: "Trigger suggestion" },
+                { combo: "Ctrl+/-", description: "Comment line" },
+                { combo: "Alt+Up/Down", description: "Move line" },
+                { combo: "Shift+Alt+Down", description: "Copy line down" },
+                { combo: "Ctrl+Shift+K", description: "Delete line" },
+                { combo: "Ctrl+D", description: "Select next occurrence" },
+                { combo: "Ctrl+L", description: "Select line" },
+                { combo: "Ctrl+Enter", description: "Insert line below" },
+                { combo: "Ctrl+Shift+Enter", description: "Insert line above" },
+                { combo: "Ctrl+Tab", description: "Next editor" },
+                { combo: "Ctrl+Shift+Tab", description: "Previous editor" },
+                { combo: "Ctrl+W", description: "Close editor" },
+            ],
+            "KICAD_SHORTCUTS": [
+                { combo: "Ctrl+N", description: "New project" },
+                { combo: "Ctrl+O", description: "Open project" },
+                { combo: "Ctrl+S", description: "Save" },
+                { combo: "Ctrl+Z", description: "Undo" },
+                { combo: "Ctrl+Y", description: "Redo" },
+                { combo: "Ctrl+C/V/X", description: "Copy/Paste/Cut" },
+                { combo: "Del", description: "Delete" },
+                { combo: "R", description: "Rotate" },
+                { combo: "M", description: "Move" },
+                { combo: "E", description: "Edit properties" },
+                { combo: "W", description: "Wire" },
+                { combo: "P", description: "Place component" },
+                { combo: "Shift+Space", description: "Cycle units" },
+                { combo: "Page Up/Down", description: "Zoom in/out" },
+                { combo: "Ctrl+Scroll", description: "Zoom" },
+                { combo: "F1/F2/F3/F4", description: "Pan directions" },
+                { combo: "Space", description: "Reset origin" },
+                { combo: "Alt+1-5", description: "Layer view" },
+                { combo: "Ctrl+B", description: "Rebuild ratsnest" },
+                { combo: "Ctrl+H", description: "Highlight net" },
+            ],
+            "FUSION_360_SHORTCUTS": [
+                { combo: "S", description: "Toolbox" },
+                { combo: "L", description: "Line" },
+                { combo: "R", description: "Rectangle" },
+                { combo: "C", description: "Circle" },
+                { combo: "D", description: "Dimension" },
+                { combo: "T", description: "Text" },
+                { combo: "M", description: "Move" },
+                { combo: "Q", description: "Press/Pull" },
+                { combo: "E", description: "Extrude" },
+                { combo: "F", description: "Fillet" },
+                { combo: "Shift+S", description: "Sketch shortcuts" },
+                { combo: "Ctrl+Z/Y", description: "Undo/Redo" },
+                { combo: "Ctrl+C/V", description: "Copy/Paste" },
+                { combo: "Delete", description: "Remove" },
+                { combo: "B", description: "Emboss" },
+                { combo: "J", description: "Joint" },
+                { combo: "H", description: "Hole" },
+                { combo: "G", description: "Grid settings" },
+                { combo: "Tab", description: "Switch input" },
+                { combo: "Alt+Drag", description: "Orbit" },
+                { combo: "Shift+Scroll", description: "Pan" },
+                { combo: "Scroll", description: "Zoom" },
+                { combo: "Home", description: "View cube" },
+                { combo: "F6", description: "Home view" },
+                { combo: "F7", description: "Slice" },
+                { combo: "Ctrl+1/2/3", description: "Orthographic views" },
+                { combo: "Ctrl+Shift+E", description: "Export" },
+                { combo: "Ctrl+S", description: "Save" },
+            ],
+            "CANVA_SHORTCUTS": [
+                { combo: "Ctrl+C/V/X", description: "Copy/Paste/Cut" },
+                { combo: "Ctrl+Z/Y", description: "Undo/Redo" },
+                { combo: "Ctrl+A", description: "Select all" },
+                { combo: "Delete", description: "Remove" },
+                { combo: "Ctrl+G/U", description: "Group/Ungroup" },
+                { combo: "Ctrl+D", description: "Duplicate" },
+                { combo: "Shift+Arrow", description: "Nudge" },
+                { combo: "Alt+Drag", description: "Duplicate while dragging" },
+                { combo: "T", description: "Add text" },
+                { combo: "R", description: "Add rectangle" },
+                { combo: "L", description: "Add line" },
+                { combo: "C", description: "Add circle" },
+                { combo: "B", description: "Bold" },
+                { combo: "I", description: "Italic" }, // Corrected from '1' to 'I' based on common Canva shortcuts
+                { combo: "U", description: "Underline" },
+                { combo: "Ctrl+K", description: "Link" },
+                { combo: "Ctrl+Shift+K", description: "Unlink" },
+                { combo: "Ctrl+E", description: "Align center" },
+                { combo: "Ctrl+L/R", description: "Align left/right" },
+                { combo: "Ctrl+Shift+M", description: "Comment" },
+                { combo: "Alt+[/]", description: "Layer back/front" },
+                { combo: "Ctrl+P", description: "Print" },
+                { combo: "Ctrl+S", description: "Save" },
+                { combo: "Ctrl+Shift+S", description: "Save As" },
+                { combo: "Ctrl+Shift+D", description: "Download" },
+            ],
+            // The "MACRO" category will be dynamically populated based on the 'macros' state
+            // "MEDIA", "LAYERS", "SPECIAL", "QMK LIGHTING" remain static presets
+            "MEDIA": [
+                { combo: "KC_MPRV", description: "Prev Track" },
+                { combo: "KC_MNXT", description: "Next Track" },
+                { combo: "KC_MPLY", description: "Play/Pause" },
+                { combo: "KC_MUTE", description: "Mute" },
+                { combo: "KC_VOLU", description: "Volume Up" },
+                { combo: "KC_VOLD", description: "Volume Down" },
+            ],
+            "LAYERS": [
+                { combo: "TG(1)", description: "Toggle Layer 1" },
+                { combo: "MO(1)", description: "Momentary Layer 1" },
+                { combo: "TO(0)", description: "To Layer 0" },
+            ],
+            "SPECIAL": [
+                { combo: "KC_PWR", description: "Power" },
+                { combo: "KC_SLEP", description: "Sleep" },
+                { combo: "KC_WAKE", description: "Wake" },
+            ],
+            "QMK LIGHTING": [
+                { combo: "RGB_TOG", description: "RGB Toggle" },
+                { combo: "RGB_MOD", description: "RGB Mode" },
+                { combo: "RGB_HUI", description: "Hue Inc" },
+                { combo: "RGB_HUD", description: "Hue Dec" },
+                { combo: "RGB_SAI", description: "Sat Inc" },
+                { combo: "RGB_SAD", description: "Sat Dec" },
+                { combo: "RGB_VAI", description: "Val Inc" },
+                { combo: "RGB_VAD", description: "Val Dec" },
+            ]
+        };
+        // --- END OF PRESETS DATA ---
+
+        // --- START OF TRANSLATIONS DATA ---
+        const translations = {
+            "appTitle": {
+                "en": "Trkey Keymap Configurator",
+                "ko": "트키 키맵 설정기",
+                "es": "Configurador de Teclado Trkey"
+            },
+            "keymapTab": {
+                "en": "KEYMAP",
+                "ko": "키맵",
+                "es": "MAPA DE TECLAS"
+            },
+            "macrosTab": {
+                "en": "MACROS",
+                "ko": "매크로",
+                "es": "MACROS"
+            },
+            "settingsTab": {
+                "en": "SETTINGS",
+                "ko": "설정",
+                "es": "AJUSTES"
+            },
+            "mapUploadTab": { // New translation key for Map Upload tab
+                "en": "MAP UPLOAD",
+                "ko": "맵 업로드",
+                "es": "CARGA DE MAPA"
+            },
+            "keyTesterTab": {
+                "en": "KEY TESTER",
+                "ko": "키 테스터",
+                "es": "PROBADOR DE TECLAS"
+            },
+            "githubLink": {
+                "en": "GITHUB",
+                "ko": "깃허브",
+                "es": "GITHUB"
+            },
+            "version": {
+                "en": "Version",
+                "ko": "버전",
+                "es": "Versión"
+            },
+            "builtBy": { // New translation key for "Built by"
+                "en": "Built by",
+                "ko": "제작자",
+                "es": "Construido por"
+            },
+            "keySelectedTitle": {
+                "en": "Key Selected",
+                "ko": "키 선택됨",
+                "es": "Tecla Seleccionada"
+            },
+            "keySelectedMessage": {
+                "en": "Key at row {row}, column {col} selected. Now click a shortcut from the pool to assign it.",
+                "ko": "행 {row}, 열 {col}의 키가 선택되었습니다. 이제 풀에서 단축키를 클릭하여 할당하세요.",
+                "es": "Tecla en fila {row}, columna {col} seleccionada. Ahora haga clic en un atajo del grupo para asignarlo."
+            },
+            "shortcutMappedTitle": {
+                "en": "Shortcut Mapped",
+                "ko": "단축키 매핑됨",
+                "es": "Atajo Mapeado"
+            },
+            "shortcutMappedMessage": {
+                "en": "Shortcut \"{shortcut}\" mapped to key at row {row}, column {col}.",
+                "ko": "단축키 \"{shortcut}\"이(가) 행 {row}, 열 {col}의 키에 매핑되었습니다.",
+                "es": "Atajo \"{shortcut}\" mapeado a la tecla en fila {row}, columna {col}."
+            },
+            "noKeySelectedTitle": {
+                "en": "No Key Selected",
+                "ko": "선택된 키 없음",
+                "es": "Ninguna Tecla Seleccionada"
+            },
+            "noKeySelectedMessage": {
+                "en": "Please select a key on the keymap grid first, then click a shortcut to assign it.",
+                "ko": "먼저 키맵 그리드에서 키를 선택한 다음, 단축키를 클릭하여 할당하세요.",
+                "es": "Por favor, seleccione una tecla en la cuadrícula del mapa de teclas primero, luego haga clic en un atajo para asignarlo."
+            },
+            "profileSavedTitle": {
+                "en": "Profile Saved",
+                "ko": "프로필 저장됨",
+                "es": "Perfil Guardado"
+            },
+            "profileSavedMessage": {
+                "en": "Your current keymap and macros have been saved to your browser's local storage.",
+                "ko": "현재 키맵과 매크로가 브라우저의 로컬 저장소에 저장되었습니다.",
+                "es": "Su mapa de teclas y macros actuales se han guardado en el almacenamiento local de su navegador."
+            },
+            "profileLoadedTitle": {
+                "en": "Profile Loaded",
+                "ko": "프로필 불러옴",
+                "es": "Perfil Cargado"
+            },
+            "profileLoadedMessage": {
+                "en": "Profile loaded successfully from browser storage.",
+                "ko": "브라우저 저장소에서 프로필을 성공적으로 불러왔습니다.",
+                "es": "Perfil cargado exitosamente desde el almacenamiento del navegador."
+            },
+            "noProfileFoundTitle": {
+                "en": "No Profile Found",
+                "ko": "프로필을 찾을 수 없음",
+                "es": "No se Encontró Perfil"
+            },
+            "noProfileFoundMessage": {
+                "en": "No saved profile found in browser storage.",
+                "ko": "브라우저 저장소에서 저장된 프로필을 찾을 수 없습니다.",
+                "es": "No se encontró ningún perfil guardado en el almacenamiento del navegador."
+            },
+            "exportSuccessfulTitle": {
+                "en": "Export Successful",
+                "ko": "내보내기 성공",
+                "es": "Exportación Exitosa"
+            },
+            "exportSuccessfulMessage": {
+                "en": "Configuration exported as trkey_config.json.",
+                "ko": "설정이 trkey_config.json으로 내보내졌습니다.",
+                "es": "Configuración exportada como trkey_config.json."
+            },
+            "webSerialApiNotSupportedTitle": {
+                "en": "Web Serial API Not Supported",
+                "ko": "웹 시리얼 API 미지원",
+                "es": "API Serial Web No Compatible"
+            },
+            "webSerialApiNotSupportedMessage": {
+                "en": "Your browser does not support the Web Serial API. Please use a Chromium-based browser (e.g., Chrome, Edge) for this feature.",
+                "ko": "귀하의 브라우저는 웹 시리얼 API를 지원하지 않습니다. 이 기능을 사용하려면 크롬 기반 브라우저(예: Chrome, Edge)를 사용하세요.",
+                "es": "Su navegador no es compatible con la API Serial Web. Por favor, use un navegador basado en Chromium (ej., Chrome, Edge) para esta función."
+            },
+            "deviceConnectedTitle": {
+                "en": "Device Connected",
+                "ko": "장치 연결됨",
+                "es": "Dispositivo Conectado"
+            },
+            "deviceConnectedMessage": {
+                "en": "Micropad connected successfully. You can now upload your keymap.",
+                "ko": "마이크로패드가 성공적으로 연결되었습니다. 이제 키맵을 업로드할 수 있습니다.",
+                "es": "Micropad conectado exitosamente. Ahora puede cargar su mapa de teclas."
+            },
+            "connectionFailedTitle": {
+                "en": "Connection Failed",
+                "ko": "연결 실패",
+                "es": "Conexión Fallida"
+            },
+            "connectionFailedMessage": {
+                "en": "Failed to connect to device: {error}. Please ensure the device is ready to receive data (e.g., in programming mode or awaiting input).",
+                "ko": "장치 연결 실패: {error}. 장치가 데이터를 수신할 준비가 되었는지 확인하세요 (예: 프로그래밍 모드 또는 입력 대기 중).",
+                "es": "Fallo al conectar con el dispositivo: {error}. Asegúrese de que el dispositivo esté listo para recibir datos (ej., en modo de programación o esperando entrada)."
+            },
+            "disconnectedTitle": {
+                "en": "Disconnected",
+                "ko": "연결 해제됨",
+                "es": "Desconectado"
+            },
+            "disconnectedMessage": {
+                "en": "Micropad disconnected successfully.",
+                "ko": "마이크로패드가 성공적으로 연결 해제되었습니다.",
+                "es": "Micropad desconectado exitosamente."
+            },
+            "disconnectionFailedTitle": {
+                "en": "Disconnection Failed",
+                "ko": "연결 해제 실패",
+                "es": "Fallo al Desconectar"
+            },
+            "disconnectionFailedMessage": {
+                "en": "Failed to disconnect: {error}",
+                "ko": "연결 해제 실패: {error}",
+                "es": "Fallo al desconectar: {error}"
+            },
+            "noDeviceConnectedTitle": {
+                "en": "No Device Connected",
+                "ko": "장치 연결 안됨",
+                "es": "Ningún Dispositivo Conectado"
+            },
+            "noDeviceConnectedMessage": {
+                "en": "Please connect to your micropad first.",
+                "ko": "먼저 마이크로패드를 연결하세요.",
+                "es": "Por favor, conecte su micropad primero."
+            },
+            "uploadSuccessfulTitle": {
+                "en": "Upload Successful",
+                "ko": "업로드 성공",
+                "es": "Carga Exitosa"
+            },
+            "uploadSuccessfulMessage": {
+                "en": "Configuration uploaded successfully! The device should restart with the new keymap.",
+                "ko": "설정이 성공적으로 업로드되었습니다! 장치가 새 키맵으로 다시 시작됩니다.",
+                "es": "¡Configuración cargada exitosamente! El dispositivo debería reiniciarse con el nuevo mapa de teclas."
+            },
+            "uploadFailedTitle": {
+                "en": "Upload Failed",
+                "ko": "업로드 실패",
+                "es": "Carga Fallida"
+            },
+            "uploadFailedMessage": {
+                "en": "Failed to upload: {error}. Please ensure the device is ready to receive data (e.g., in programming mode or awaiting input).",
+                "ko": "업로드 실패: {error}. 장치가 데이터를 수신할 준비가 되었는지 확인하세요 (예: 프로그래밍 모드 또는 입력 대기 중).",
+                "es": "Fallo al cargar: {error}. Asegúrese de que el dispositivo esté listo para recibir datos (ej., en modo de programación o esperando entrada)."
+            },
+            "jsonParsingErrorTitle": {
+                "en": "JSON Parsing Error",
+                "ko": "JSON 구문 분석 오류",
+                "es": "Error de Análisis JSON"
+            },
+            "jsonParsingErrorMessage": {
+                "en": "Failed to parse JSON: {error}",
+                "ko": "JSON 구문 분석 실패: {error}",
+                "es": "Fallo al analizar JSON: {error}"
+            },
+            "macroNameEmptyError": {
+                "en": "Macro name cannot be empty.",
+                "ko": "매크로 이름은 비워둘 수 없습니다.",
+                "es": "El nombre de la macro no puede estar vacío."
+            },
+            "macroSequenceEmptyError": {
+                "en": "Macro sequence cannot be empty.",
+                "ko": "매크로 시퀀스는 비워둘 수 없습니다.",
+                "es": "La secuencia de la macro no puede estar vacía."
+            },
+            "shortcutComboEmptyError": {
+                "en": "Shortcut combination cannot be empty.",
+                "ko": "단축키 조합은 비워둘 수 없습니다.",
+                "es": "La combinación de atajo no puede estar vacía."
+            },
+            "descriptionEmptyError": {
+                "en": "Description cannot be empty.",
+                "ko": "설명은 비워둘 수 없습니다.",
+                "es": "La descripción no puede estar vacía."
+            },
+            "aiShortcutsGeneratedTitle": {
+                "en": "AI Shortcuts Generated",
+                "ko": "AI 단축키 생성됨",
+                "es": "Atajos de IA Generados"
+            },
+            "aiShortcutsGeneratedMessage": {
+                "en": "New shortcuts added to 'AI GENERATED' category in the shortcut pool.",
+                "ko": "새 단축키가 단축키 풀의 'AI 생성' 카테고리에 추가되었습니다.",
+                "es": "Nuevos atajos añadidos a la categoría 'GENERADOS POR IA' en el grupo de atajos."
+            },
+            "aiGenerationFailedTitle": {
+                "en": "AI Generation Failed",
+                "ko": "AI 생성 실패",
+                "es": "Fallo en la Generación de IA"
+            },
+            "aiGenerationFailedMessage": {
+                "en": "Could not generate shortcuts. Please try again or refine your prompt. Error: {error}. Ensure your API key is valid and CORS is handled if running locally.",
+                "ko": "단축키를 생성할 수 없습니다. 다시 시도하거나 프롬프트를 다듬으세요. 오류: {error}. API 키가 유효하고 로컬에서 실행 중인 경우 CORS가 처리되었는지 확인하세요.",
+                "es": "No se pudieron generar los atajos. Inténtelo de nuevo o refine su solicitud. Error: {error}. Asegúrese de que su clave de API sea válida y de que CORS esté configurado si se ejecuta localmente."
+            },
+            "aiMacrosGeneratedTitle": {
+                "en": "AI Macros Generated",
+                "ko": "AI 매크로 생성됨",
+                "es": "Macros de IA Generadas"
+            },
+            "aiMacrosGeneratedMessage": {
+                "en": "New macros added to your list.",
+                "ko": "새 매크로가 목록에 추가되었습니다.",
+                "es": "Nuevas macros añadidas a su lista."
+            },
+            "aiMacroGenerationFailedTitle": {
+                "en": "AI Macro Generation Failed",
+                "ko": "AI 매크로 생성 실패",
+                "es": "Fallo en la Generación de Macros de IA"
+            },
+            "aiMacroGenerationFailedMessage": {
+                "en": "Could not generate macros. Please try again or refine your prompt. Error: {error}. Ensure your API key is valid and CORS is handled if running locally.",
+                "ko": "매크로를 생성할 수 없습니다. 다시 시도하거나 프롬프트를 다듬으세요. 오류: {error}. API 키가 유효하고 로컬에서 실행 중인 경우 CORS가 처리되었는지 확인하세요.",
+                "es": "No se pudieron generar las macros. Inténtelo de nuevo o refine su solicitud. Error: {error}. Asegúrese de que su clave de API sea válida y de que CORS esté configurado si se ejecuta localmente."
+            },
+            "emptyKey": {
+                "en": "Empty",
+                "ko": "비어 있음",
+                "es": "Vacío"
+            },
+            "addShortcut": {
+                "en": "+ Add Shortcut",
+                "ko": "+ 단축키 추가",
+                "es": "+ Añadir Atajo"
+            },
+            "aiPoweredShortcutGenerator": {
+                "en": "AI-POWERED SHORTCUT GENERATOR",
+                "ko": "AI 기반 단축키 생성기",
+                "es": "GENERADOR DE ATAJOS CON IA"
+            },
+            "aiShortcutGeneratorDescription": {
+                "en": "Describe the shortcuts you need (e.g., \"common shortcuts for web browsing in macOS\", \"media controls for Windows\").",
+                "ko": "필요한 단축키를 설명하세요 (예: \"macOS 웹 브라우징용 일반 단축키\", \"Windows 미디어 컨트롤\").",
+                "es": "Describa los atajos que necesita (ej., \"atajos comunes para navegar por la web en macOS\", \"controles multimedia para Windows\")."
+            },
+            "aiShortcutGeneratorPlaceholder": {
+                "en": "e.g., shortcuts for navigating documents in Linux",
+                "ko": "예: Linux에서 문서 탐색을 위한 단축키",
+                "es": "ej., atajos para navegar documentos en Linux"
+            },
+            "generateWithAI": {
+                "en": "Generate with AI",
+                "ko": "AI로 생성",
+                "es": "Generar con IA"
+            },
+            "generating": {
+                "en": "Generating...",
+                "ko": "생성 중...",
+                "es": "Generando..."
+            },
+            "addMacro": {
+                "en": "+ Add New Macro",
+                "ko": "+ 새 매크로 추가",
+                "es": "+ Añadir Nueva Macro"
+            },
+            "noMacrosDefined": {
+                "en": "No macros defined yet. Add a new macro or use the AI generator below.",
+                "ko": "정의된 매크로가 없습니다. 새 매크로를 추가하거나 아래 AI 생성기를 사용하세요.",
+                "es": "No hay macros definidas aún. Añada una nueva macro o use el generador de IA a continuación."
+            },
+            "edit": {
+                "en": "Edit",
+                "ko": "편집",
+                "es": "Editar"
+            },
+            "delete": {
+                "en": "Delete",
+                "ko": "삭제",
+                "es": "Eliminar"
+            },
+            "aiPoweredMacroGenerator": {
+                "en": "AI-POWERED MACRO GENERATOR",
+                "ko": "AI 기반 매크로 생성기",
+                "es": "GENERADOR DE MACROS CON IA"
+            },
+            "aiMacroGeneratorDescription": {
+                "en": "Describe the macros you need (e.g., \"macro for opening calculator\", \"email signature macro\").",
+                "ko": "필요한 매크로를 설명하세요 (예: \"계산기 열기 매크로\", \"이메일 서명 매크로\").",
+                "es": "Describa las macros que necesita (ej., \"macro para abrir calculadora\", \"macro de firma de correo electrónico\")."
+            },
+            "aiMacroGeneratorPlaceholder": {
+                "en": "e.g., macro for inserting current date",
+                "ko": "예: 현재 날짜 삽입 매크로",
+                "es": "ej., macro para insertar la fecha actual"
+            },
+            "keyTesterDescription": {
+                "en": "Press any key on your physical keyboard to see its key code and key value.",
+                "ko": "물리적 키보드의 아무 키나 눌러 키 코드와 키 값을 확인하세요.",
+                "es": "Pulse cualquier tecla de su teclado físico para ver su código y valor de tecla."
+            },
+            "noKeysPressed": {
+                "en": "No keys pressed yet...",
+                "ko": "아직 키가 눌리지 않았습니다...",
+                "es": "Ninguna tecla presionada aún..."
+            },
+            "key": {
+                "en": "Key",
+                "ko": "키",
+                "es": "Tecla"
+            },
+            "code": {
+                "en": "Code",
+                "ko": "코드",
+                "es": "Código"
+            },
+            "saveProfile": {
+                "en": "Save Profile",
+                "ko": "프로필 저장",
+                "es": "Guardar Perfil"
+            },
+            "loadProfile": {
+                "en": "Load Profile",
+                "ko": "프로필 불러오기",
+                "es": "Cargar Perfil"
+            },
+            "qmkJsonConfiguration": {
+                "en": "QMK JSON Configuration",
+                "ko": "QMK JSON 구성",
+                "es": "Configuración JSON de QMK"
+            },
+            "qmkJsonDescription": {
+                "en": "You can export your current micropad keymap as JSON, upload it to your device, or load a keymap by pasting JSON below. Note: This configurator supports a 3x3 micropad layout.",
+                "ko": "현재 마이크로패드 키맵을 JSON으로 내보내거나, 장치에 업로드하거나, 아래에 JSON을 붙여넣어 키맵을 불러올 수 있습니다. 참고: 이 설정기는 3x3 마이크로패드 레이아웃을 지원합니다.",
+                "es": "Puede exportar su mapa de teclas de micropad actual como JSON, cargarlo en su dispositivo o cargar un mapa de teclas pegando el JSON a continuación. Nota: Este configurador es compatible con un diseño de micropad de 3x3."
+            },
+            "exportKeymapJson": {
+                "en": "Export Keymap JSON",
+                "ko": "키맵 JSON 내보내기",
+                "es": "Exportar JSON de Mapa de Teclas"
+            },
+            "connectToMicropad": {
+                "en": "Connect to Micropad",
+                "ko": "마이크로패드 연결",
+                "es": "Conectar a Micropad"
+            },
+            "uploadKeymapToDevice": {
+                "en": "Upload Keymap to Device",
+                "ko": "장치에 키맵 업로드",
+                "es": "Cargar Mapa de Teclas al Dispositivo"
+            },
+            "disconnectMicropad": {
+                "en": "Disconnect Micropad",
+                "ko": "마이크로패드 연결 해제",
+                "es": "Desconectado Micropad"
+            },
+            "loadJsonFromTextArea": {
+                "en": "Load JSON from Text Area",
+                "ko": "텍스트 영역에서 JSON 불러오기",
+                "es": "Cargar JSON desde Área de Texto"
+            },
+            "pasteJsonPlaceholder": {
+                "en": "Paste your QMK keymap JSON here...",
+                "ko": "여기에 QMK 키맵 JSON을 붙여넣으세요...",
+                "es": "Pegue su JSON de mapa de teclas QMK aquí..."
+            },
+            "loadJson": {
+                "en": "Load JSON",
+                "ko": "JSON 불러오기",
+                "es": "Cargar JSON"
+            },
+            "currentKeymapJsonPreview": {
+                "en": "Current Keymap JSON Preview",
+                "ko": "현재 키맵 JSON 미리보기",
+                "es": "Vista Previa del JSON del Mapa de Teclas Actual"
+            },
+            "editMacro": {
+                "en": "Edit Macro",
+                "ko": "매크로 편집",
+                "es": "Editar Macro"
+            },
+            "createNewMacro": {
+                "en": "Create New Macro",
+                "ko": "새 매크로 생성",
+                "es": "Crear Nueva Macro"
+            },
+            "macroName": {
+                "en": "Macro Name:",
+                "ko": "매크로 이름:",
+                "es": "Nombre de la Macro:"
+            },
+            "macroNamePlaceholder": {
+                "en": "e.g., Delete Line",
+                "ko": "예: 줄 삭제",
+                "es": "ej., Eliminar Línea"
+            },
+            "macroDescriptionOptional": {
+                "en": "Description (optional):",
+                "ko": "설명 (선택 사항):",
+                "es": "Descripción (opcional):"
+            },
+            "macroDescriptionPlaceholder": {
+                "en": "e.g., Deletes current line, copies to clipboard",
+                "ko": "예: 현재 줄 삭제, 클립보드에 복사",
+                "es": "ej., Elimina la línea actual, copia al portapapeles"
+            },
+            "macroSequence": {
+                "en": "Macro Sequence (e.g., Hello World!{Enter}, Ctrl+S{Delay 100}{Ctrl+P}):",
+                "ko": "매크로 시퀀스 (예: Hello World!{Enter}, Ctrl+S{Delay 100}{Ctrl+P}):",
+                "es": "Secuencia de Macro (ej., ¡Hola Mundo!{Enter}, Ctrl+S{Delay 100}{Ctrl+P}):"
+            },
+            "macroSequencePlaceholder": {
+                "en": "e.g., Ctrl+C,Ctrl+V,Enter",
+                "ko": "예: Ctrl+C,Ctrl+V,Enter",
+                "es": "ej., Ctrl+C,Ctrl+V,Enter"
+            },
+            "cancel": {
+                "en": "Cancel",
+                "ko": "취소",
+                "es": "Cancelar"
+            },
+            "saveChanges": {
+                "en": "Save Changes",
+                "ko": "변경 사항 저장",
+                "es": "Guardar Cambios"
+            },
+            "createMacro": {
+                "en": "Create Macro",
+                "ko": "매크로 생성",
+                "es": "Crear Macro"
+            },
+            "confirmAction": {
+                "en": "Confirm Action",
+                "ko": "작업 확인",
+                "es": "Confirmar Acción"
+            },
+            "deleteMacroConfirmation": {
+                "en": "Are you sure you want to delete this macro? This action cannot be undone.",
+                "ko": "이 매크로를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+                "es": "¿Está seguro de que desea eliminar esta macro? Esta acción no se puede deshacer."
+            },
+            "confirm": {
+                "en": "Confirm",
+                "ko": "확인",
+                "es": "Confirmar"
+            },
+            "addNewShortcut": {
+                "en": "Add New Shortcut",
+                "ko": "새 단축키 추가",
+                "es": "Añadir Nuevo Atajo"
+            },
+            "shortcutCombo": {
+                "en": "Shortcut Combo (e.g., Ctrl+C):",
+                "ko": "단축키 조합 (예: Ctrl+C):",
+                "es": "Combinación de Atajo (ej., Ctrl+C):"
+            },
+            "shortcutDescription": {
+                "en": "Description (e.g., Format Document):",
+                "ko": "설명 (예: 문서 서식):",
+                "es": "Descripción (ej., Formatear Documento):"
+            },
+            "shortcutDescriptionPlaceholder": {
+                "en": "e.g., Open quick search",
+                "ko": "예: 빠른 검색 열기",
+                "es": "ej., Abrir búsqueda rápida"
+            },
+            "addShortcutButton": {
+                "en": "Add Shortcut",
+                "ko": "단축키 추가",
+                "es": "Añadir Atajo"
+            },
+            "micropadConfiguredForLayer": {
+                "en": "No keymap configured for Layer {layer}. Drag shortcuts from the pool below to configure this layer.",
+                "ko": "레이어 {layer}에 대해 구성된 키맵이 없습니다. 아래 풀에서 단축키를 끌어 이 레이어를 구성하세요.",
+                "es": "No hay mapa de teclas configurado para la Capa {layer}. Arrastre los atajos del grupo de abajo para configurar esta capa."
+            },
+            "shortcuts": {
+                "en": "SHORTCUTS",
+                "ko": "단축키",
+                "es": "ATAJOS"
+            },
+            "languageSelection": {
+                "en": "Language Selection",
+                "ko": "언어 선택",
+                "es": "Selección de Idioma"
+            },
+            "english": {
+                "en": "English",
+                "ko": "영어",
+                "es": "Inglés"
+            },
+            "korean": {
+                "en": "Korean",
+                "ko": "한국어",
+                "es": "Coreano"
+            },
+            "spanish": {
+                "en": "Spanish",
+                "ko": "스페인어",
+                "es": "Español"
+            },
+            "debugging": {
+                "en": "Debugging",
+                "ko": "디버깅",
+                "es": "Depuración"
+            },
+            "enableDebugMode": {
+                "en": "Enable Debug Mode",
+                "ko": "디버그 모드 활성화",
+                "es": "Activar Modo Depuración"
+            },
+            "debugModeDescription": {
+                "en": "Toggle debug mode to see detailed logs in the console.",
+                "ko": "디버그 모드를 전환하여 콘솔에서 자세한 로그를 확인합니다.",
+                "es": "Alternar el modo de depuración para ver registros detallados en la consola."
+            }
+        };
+        // --- END OF TRANSLATIONS DATA ---
+
+        // Helper function to create an empty 3x3 grid for a keymap layer
+        const createEmptyGrid = () => Array(3).fill().map(() => Array(3).fill({ tap: null, hold: null }));
+
+        // --- START OF KeyComponent DEFINITION ---
+        const KeyComponent = React.memo(({
+            keyData,
+            isMacro, // Prop from App.js to indicate if this key represents a macro
+            isShortcut, // Prop from App.js to indicate if this key represents a custom/AI shortcut
+            onClick,
+            onDoubleClick,
+            customBgColor,
+            customStyles,
+            draggable,
+            onDragStart,
+            onDrop,
+            onDragOver,
+            onDragEnd
+        }) => {
+            const { combo, description } = keyData;
+
+            let mainText = '';
+            let subText = '';
+
+            // Determine main and sub text based on available data
+            if (description) {
+                mainText = description;
+                if (combo && combo !== description) {
+                    subText = combo;
+                }
+            } else if (combo) {
+                mainText = combo;
+            } else {
+                mainText = 'Empty';
+            }
+
+            // Append type indicators to subText if applicable
+            if (isMacro) {
+                subText = subText ? `${subText} (Macro)` : '(Macro)';
+            } else if (isShortcut) {
+                subText = subText ? `${subText} (Custom)` : '(Custom)';
+            }
+
+
+            // Base Tailwind classes for all key components
+            const keyClass = `
+                relative
+                w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28
+                flex items-center justify-center
+                font-bold rounded-lg
+                border-b-4 border-r-2 border-red-700
+                active:border-b-0
+                transition-all duration-100 ease-in-out
+                transform active:translate-y-1 active:translate-x-0.5
+                shadow-lg
+                cursor-pointer
+                select-none
+                overflow-hidden
+                p-1
+            `;
+
+            // Determine background color and text color based on type (macro, shortcut, or default red) or custom color
+            let colorClass = '';
+            let mainTextColorClass = ''; // For mainText
+            let subTextColorClass = ''; // For subText
+
+            if (customBgColor) {
+                colorClass = `bg-[${customBgColor}]`;
+                mainTextColorClass = 'text-white';
+                subTextColorClass = 'text-zinc-400 opacity-80';
+            } else if (isMacro) {
+                colorClass = 'bg-purple-600 hover:bg-purple-700';
+                mainTextColorClass = 'text-white';
+                subTextColorClass = 'text-purple-200 opacity-80';
+            } else {
+                // Default red keys or custom shortcuts (blue)
+                if (isShortcut) { // Custom/AI generated shortcuts
+                    colorClass = 'bg-blue-600 hover:bg-blue-700';
+                    mainTextColorClass = 'text-white';
+                    subTextColorClass = 'text-blue-200 opacity-80';
+                } else { // Regular keys
+                    colorClass = 'bg-red-500 hover:bg-red-600';
+                    mainTextColorClass = 'text-black'; // Main text is black as requested
+                    subTextColorClass = 'text-zinc-700 opacity-80'; // Subtext is a darker gray for contrast on red
+                }
+            }
+
+            return (
+                <div
+                    className={`${keyClass} ${colorClass} ${customStyles || ''}`}
+                    onClick={onClick}
+                    onDoubleClick={onDoubleClick}
+                    style={customBgColor ? { backgroundColor: customBgColor } : {}}
+                    draggable={draggable}
+                    onDragStart={onDragStart}
+                    onDrop={onDrop}
+                    onDragOver={onDragOver}
+                    onDragEnd={onDragEnd}
+                >
+                    <div className="text-center break-words leading-tight">
+                        <span className={`block text-base font-bold ${mainTextColorClass}`}>{mainText}</span>
+                        {subText && <span className={`block text-xs mt-0.5 ${subTextColorClass}`}>{subText}</span>}
+                    </div>
+                </div>
+            );
+        });
+        // --- END OF KeyComponent DEFINITION ---
+
+        // --- START OF Modal DEFINITION ---
+        const Modal = ({ show, title, message, onClose, customButtons, language }) => {
+            if (!show) {
+                return null;
+            }
+
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-zinc-800 p-6 rounded-lg shadow-xl max-w-md w-full border border-red-500">
+                        <h2 className="text-xl font-bold text-red-300 mb-4">{title}</h2>
+                        <p className="text-white mb-6">{message}</p>
+                        <div className="flex justify-end space-x-2">
+                            {customButtons ? (
+                                customButtons.map((button, index) => (
+                                    <button
+                                        key={index}
+                                        onClick={button.onClick}
+                                        className={`${button.className || 'bg-red-600 hover:bg-red-700'} text-white font-bold py-2 px-4 rounded-lg`}
+                                    >
+                                        {button.label}
+                                    </button>
+                                ))
+                            ) : (
+                                <button
+                                    onClick={onClose}
+                                    className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg"
+                                >
+                                    {translations.cancel[language]}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        // --- END OF Modal DEFINITION ---
+
+        // --- START OF MacroFormModal DEFINITION ---
+        const MacroFormModal = ({ show, onClose, onSave, macro, language }) => {
+            const [name, setName] = useState('');
+            const [description, setDescription] = useState('');
+            const [sequence, setSequence] = useState(''); // Renamed from 'steps' to 'sequence' for clarity
+            const [error, setError] = useState('');
+
+            useEffect(() => {
+                if (show && macro) {
+                    setName(macro.name || '');
+                    setDescription(macro.description || '');
+                    setSequence(macro.sequence || ''); // Use 'sequence'
+                    setError('');
+                } else if (show && !macro) {
+                    setName('');
+                    setDescription('');
+                    setSequence('');
+                    setError('');
+                }
+            }, [show, macro]);
+
+            const handleSave = () => {
+                if (!name.trim()) {
+                    setError(translations.macroNameEmptyError[language]);
+                    return;
+                }
+                if (!sequence.trim()) {
+                    setError(translations.macroSequenceEmptyError[language]);
+                    return;
+                }
+                setError('');
+                // Pass 'sequence' instead of 'steps'
+                onSave({ id: macro ? macro.id : Date.now(), name, description, sequence });
+                onClose();
+            };
+
+            if (!show) {
+                return null;
+            }
+
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-zinc-800 p-6 rounded-lg shadow-xl max-w-md w-full border border-red-500">
+                        <h2 className="text-xl font-bold text-red-300 mb-4">{macro ? translations.editMacro[language] : translations.createNewMacro[language]}</h2>
+
+                        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+
+                        <div className="mb-4">
+                            <label htmlFor="macroName" className="block text-white text-sm font-bold mb-2">{translations.macroName[language]}</label>
+                            <input
+                                type="text"
+                                id="macroName"
+                                className="shadow appearance-none border border-zinc-700 rounded w-full py-2 px-3 text-white leading-tight focus:outline-none focus:shadow-outline bg-zinc-900"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                placeholder={translations.macroNamePlaceholder[language]}
+                            />
+                        </div>
+                        <div className="mb-4">
+                            <label htmlFor="macroDescription" className="block text-white text-sm font-bold mb-2">{translations.macroDescriptionOptional[language]}</label>
+                            <input
+                                type="text"
+                                id="macroDescription"
+                                className="shadow appearance-none border border-zinc-700 rounded w-full py-2 px-3 text-white leading-tight focus:outline-none focus:shadow-outline bg-zinc-900"
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                                placeholder={translations.macroDescriptionPlaceholder[language]}
+                            />
+                        </div>
+                        <div className="mb-6">
+                            <label htmlFor="macroSequence" className="block text-white text-sm font-bold mb-2">{translations.macroSequence[language]}</label>
+                            <textarea
+                                id="macroSequence"
+                                className="shadow appearance-none border border-zinc-700 rounded w-full py-2 px-3 text-white leading-tight focus:outline-none focus:shadow-outline bg-zinc-900 h-24 resize-y"
+                                value={sequence}
+                                onChange={(e) => setSequence(e.target.value)}
+                                placeholder={translations.macroSequencePlaceholder[language]}
+                            />
+                        </div>
+
+                        <div className="flex justify-end space-x-2">
+                            <button
+                                onClick={onClose}
+                                className="bg-zinc-600 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded-lg"
+                            >
+                                {translations.cancel[language]}
+                            </button>
+                            <button
+                                onClick={handleSave}
+                                className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg"
+                            >
+                                {macro ? translations.saveChanges[language] : translations.createMacro[language]}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        // --- END OF MacroFormModal DEFINITION ---
+
+        // --- START OF ConfirmationModal DEFINITION ---
+        const ConfirmationModal = ({ show, onClose, onConfirm, message, language }) => {
+            if (!show) {
+                return null;
+            }
+
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-zinc-800 p-6 rounded-lg shadow-xl max-w-md w-full border border-red-500">
+                        <h2 className="text-xl font-bold text-red-300 mb-4">{translations.confirmAction[language]}</h2>
+                        <p className="text-white mb-6">{message}</p>
+                        <div className="flex justify-end space-x-2">
+                            <button
+                                onClick={onClose}
+                                className="bg-zinc-600 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded-lg"
+                            >
+                                {translations.cancel[language]}
+                            </button>
+                            <button
+                                onClick={onConfirm}
+                                className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg"
+                            >
+                                {translations.confirm[language]}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        // --- END OF ConfirmationModal DEFINITION ---
+
+        // --- START OF AddShortcutModal DEFINITION ---
+        const AddShortcutModal = ({ show, onClose, onSave, language }) => {
+            const [combo, setCombo] = useState('');
+            const [description, setDescription] = useState('');
+            const [error, setError] = useState('');
+
+            useEffect(() => {
+                if (show) {
+                    setCombo('');
+                    setDescription('');
+                    setError('');
+                }
+            }, [show]);
+
+            const handleSave = () => {
+                if (!combo.trim()) {
+                    setError(translations.shortcutComboEmptyError[language]);
+                    return;
+                }
+                if (!description.trim()) {
+                    setError(translations.descriptionEmptyError[language]);
+                    return;
+                }
+                setError('');
+                // Ensure the new shortcut is marked as a custom shortcut
+                onSave({ id: Date.now(), combo, description, isCustomShortcut: true });
+                onClose();
+            };
+
+            if (!show) {
+                return null;
+            }
+
+            return (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-zinc-800 p-6 rounded-lg shadow-xl max-w-md w-full border border-red-500">
+                        <h2 className="text-xl font-bold text-red-300 mb-4">{translations.addNewShortcut[language]}</h2>
+
+                        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+
+                        <div className="mb-4">
+                            <label htmlFor="shortcutCombo" className="block text-white text-sm font-bold mb-2">{translations.shortcutCombo[language]}</label>
+                            <input
+                                type="text"
+                                id="shortcutCombo"
+                                className="shadow appearance-none border border-zinc-700 rounded w-full py-2 px-3 text-white leading-tight focus:outline-none focus:shadow-outline bg-zinc-900"
+                                value={combo}
+                                onChange={(e) => setCombo(e.target.value)}
+                                placeholder={translations.shortcutComboPlaceholder[language]}
+                            />
+                        </div>
+                        <div className="mb-6">
+                            <label htmlFor="shortcutDescription" className="block text-white text-sm font-bold mb-2">{translations.shortcutDescription[language]}</label>
+                            <input
+                                type="text"
+                                id="shortcutDescription"
+                                className="shadow appearance-none border border-zinc-700 rounded w-full py-2 px-3 text-white leading-tight focus:outline-none focus:shadow-outline bg-zinc-900"
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                                placeholder={translations.shortcutDescriptionPlaceholder[language]}
+                            />
+                        </div>
+
+                        <div className="flex justify-end space-x-2">
+                            <button
+                                onClick={onClose}
+                                className="bg-zinc-600 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded-lg"
+                            >
+                                {translations.cancel[language]}
+                            </button>
+                            <button
+                                type="submit"
+                                onClick={handleSave}
+                                className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg"
+                            >
+                                {translations.addShortcutButton[language]}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        // --- END OF AddShortcutModal DEFINITION ---
+
+
+        // Main App component
+        function App() {
+            // State for the keymap, organized by layer (e.g., '0', '1', etc.)
+            const [keymap, setKeymap] = useState({ '0': createEmptyGrid() });
+            // State for the currently active layer being edited
+            const [activeLayer, setActiveLayer] = useState('0');
+
+            // State for the pool of available shortcuts, initialized from presets
+            const [shortcutPool, setShortcutPool] = useState(Object.fromEntries(Object.entries(presets).map(([k, v]) => [k, [...v]])));
+            // State for controlling the general info/error modal
+            const [showModal, setShowModal] = useState(false);
+            // Content for the general info/error modal
+            const [modalContent, setModalContent] = useState({ title: "", message: "" });
+            // State to track the shortcut being dragged for visual feedback
+            const [draggedShortcut, setDraggedShortcut] = useState(null);
+            // State for sidebar navigation tab
+            const [activeTab, setActiveTab] = useState('keymap');
+            // State for JSON input in the settings tab
+            const [jsonInput, setJsonInput] = useState('');
+
+            // State for Key Tester tab: stores currently pressed keys
+            const [pressedKeys, setPressedKeys] = useState([]);
+
+            // State for Macros: list of defined macros
+            const [macros, setMacros] = useState([]);
+            // Counter for assigning unique IDs to new macros
+            const [nextMacroId, setNextMacroId] = useState(1);
+            // State for showing the macro form modal (add/edit)
+            const [showMacroFormModal, setShowMacroFormModal] = useState(false);
+            // State for the macro currently being edited
+            const [editingMacro, setEditingMacro] = useState(null);
+            // State for showing the macro deletion confirmation modal
+            const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+            // ID of the macro to be deleted
+            const [macroToDeleteId, setMacroToDeleteId] = useState(null);
+
+            // State for AI Shortcut Generator prompt and loading status
+            const [aiPrompt, setAiPrompt] = useState('');
+            const [isGeneratingAiShortcuts, setIsGeneratingAiShortcuts] = useState(false);
+
+            // State for AI Macro Generator prompt and loading status
+            const [aiMacroPrompt, setAiMacroPrompt] = useState('');
+            const [isGeneratingAiMacros, setIsGeneratingAiMacros] = useState(false);
+
+            // State for currently selected shortcut category in the pool display
+            const [selectedShortcutCategory, setSelectedShortcutCategory] = useState('BASIC'); // Default to BASIC
+
+            // State for showing the Add Shortcut Modal
+            const [showAddShortcutModal, setShowAddShortcutModal] = useState(false);
+
+            // State for Web Serial API connection (for device communication)
+            const [connectedPort, setConnectedPort] = useState(null);
+
+            // New state for click-to-map functionality: stores the {row, col} of the selected keymap cell
+            const [selectedKeyForMapping, setSelectedKeyForMapping] = useState(null);
+
+            // State for selected language, default to English
+            const [language, setLanguage] = useState('en');
+
+            // State for debug mode
+            const [debugMode, setDebugMode] = useState(false);
+
+
+            // Effect to inject custom scrollbar styles into the document head
+            useEffect(() => {
+                const style = document.createElement('style');
+                style.innerHTML = `
+                    .custom-scrollbar::-webkit-scrollbar {
+                        width: 8px;
+                    }
+                    .custom-scrollbar::-webkit-scrollbar-track {
+                        background: #3f3f46; /* zinc-700 */
+                        border-radius: 10px;
+                    }
+                    .custom-scrollbar::-webkit-scrollbar-thumb {
+                        background: #ef4444; /* red-500 */
+                        border-radius: 10px;
+                    }
+                    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                        background: #dc2626; /* red-600 */
+                    }
+                `;
+                document.head.appendChild(style);
+                // Cleanup function to remove the style when the component unmounts
+                return () => {
+                    document.head.removeChild(style);
+                };
+            }, []); // Empty dependency array means this runs once on mount
+
+            // Effect to load user profile from local storage on component mount
+            useEffect(() => {
+                loadProfile();
+            }, []); // Empty dependency array means this runs once on mount
+
+            // Effect for automatic saving of profile data
+            useEffect(() => {
+                // Debounce saving to avoid frequent writes on rapid state changes
+                const handler = setTimeout(() => {
+                    saveProfile();
+                }, 500); // Save after 500ms of inactivity
+
+                return () => {
+                    clearTimeout(handler);
+                };
+            }, [keymap, macros, language, debugMode]); // Dependencies that trigger saving
+
+            // Effect for Key Tester functionality: attaches/removes keyboard event listeners
+            useEffect(() => {
+                if (activeTab === 'keytester') {
+                    // Handler for keydown events
+                    const handleKeyDown = (e) => {
+                        e.preventDefault(); // Prevent default browser actions (e.g., scrolling with spacebar)
+                        setPressedKeys(prev => {
+                            const newKey = { key: e.key, code: e.code, timestamp: Date.now() };
+                            // Add key to list only if it's not already recorded as pressed (to avoid duplicates on hold)
+                            if (!prev.some(k => k.code === e.code && k.type === 'down')) {
+                                return [...prev, { ...newKey, type: 'down' }];
+                            }
+                            return prev;
+                        });
+                    };
+
+                    // Handler for keyup events
+                    const handleKeyUp = (e) => {
+                        e.preventDefault(); // Prevent default browser actions
+                        // Remove released key from the list of pressed keys
+                        setPressedKeys(prev => prev.filter(k => k.code !== e.code));
+                    };
+
+                    // Add event listeners when Key Tester tab is active
+                    window.addEventListener('keydown', handleKeyDown);
+                    window.addEventListener('keyup', handleKeyUp);
+
+                    // Cleanup function to remove event listeners when component unmounts or tab changes
+                    return () => {
+                        window.removeEventListener('keydown', handleKeyDown);
+                        window.removeEventListener('keyup', handleKeyUp);
+                    };
+                } else {
+                    // Clear any pressed keys if switching away from the Key Tester tab
+                    setPressedKeys([]);
+                }
+            }, [activeTab]); // Reruns when activeTab changes
+
+            // Effect to dynamically update the "MACRO" category in shortcutPool based on the 'macros' state
+            useEffect(() => {
+                setShortcutPool(prevPool => ({
+                    ...prevPool,
+                    "MACRO": macros.map(m => ({
+                        combo: `MACRO_${m.id}`, // Unique combo for the macro
+                        description: m.name,    // Display the macro's user-defined name
+                        isMacro: true           // Flag to identify it as a macro for KeyComponent
+                    }))
+                }));
+            }, [macros]); // This effect runs whenever the 'macros' state changes
+
+
+            // Helper to check if the current active layer's keymap is entirely empty
+            const isKeymapEmpty = keymap[activeLayer] && keymap[activeLayer].flat().every(cell => cell.tap === null && cell.hold === null);
+
+
+            // Handles dropping a draggable item onto a keymap cell
+            const handleDrop = (e, row, col) => {
+                e.preventDefault(); // Prevent default browser handling of the drop
+                const data = e.dataTransfer.getData("text/plain"); // Get data transferred during drag
+
+                setKeymap(prevKeymap => {
+                    // Create a mutable copy of the active layer's keymap, or an empty grid if it doesn't exist
+                    const updatedLayer = [...(prevKeymap[activeLayer] || createEmptyGrid())];
+                    try {
+                        const droppedItem = JSON.parse(data); // Attempt to parse the dropped data as JSON
+
+                        if (droppedItem.isKeymapCell) {
+                            // If the dropped item originated from another keymap cell (reordering)
+                            const sourceRow = droppedItem.sourceRow;
+                            const sourceCol = droppedItem.sourceCol;
+
+                            // Swap the contents of the source and target cells
+                            const tempCell = updatedLayer[row][col];
+                            updatedLayer[row][col] = droppedItem.cell;
+                            updatedLayer[sourceRow][sourceCol] = tempCell;
+                        } else {
+                            // If the dropped item is a shortcut from the pool (assigning)
+                            let assignedShortcut = { ...droppedItem }; // Create a copy to modify
+
+                            // If it's from the "AI GENERATED" category or was explicitly marked as custom (from AddShortcutModal)
+                            // ensure it retains its custom shortcut flag.
+                            if (selectedShortcutCategory === "AI GENERATED" || assignedShortcut.isCustomShortcut) {
+                                assignedShortcut.isCustomShortcut = true;
+                            }
+                            // If it's from the "MACRO" category, it already has isMacro: true from the useEffect that populates shortcutPool
+                            // So no need to explicitly set isMacro here again, just ensure it's copied.
+
+                            updatedLayer[row][col] = { tap: assignedShortcut, hold: null }; // Assign the augmented shortcut
+                        }
+                        // Return the updated keymap state
+                        return { ...prevKeymap, [activeLayer]: updatedLayer };
+                    } catch (error) {
+                        // Fallback if JSON parsing fails (e.g., plain text was dragged)
+                        console.error("Failed to parse dropped data:", error);
+                        // Treat as a generic custom shortcut if parsing fails
+                        updatedLayer[row][col] = { tap: { combo: data, description: data, isCustomShortcut: true }, hold: null };
+                        return { ...prevKeymap, [activeLayer]: updatedLayer };
+                    }
+                });
+                setDraggedShortcut(null); // Clear the dragged shortcut state after drop
+                setSelectedKeyForMapping(null); // Clear any active click-to-map selection
+            };
+
+            // Handles starting a drag operation from a keymap cell (for reordering)
+            const handleKeymapDragStart = (e, cell, row, col) => {
+                // Store the entire cell object and its original position as JSON
+                const dragData = JSON.stringify({ isKeymapCell: true, cell: cell, sourceRow: row, sourceCol: col });
+                e.dataTransfer.setData("text/plain", dragData);
+                setSelectedKeyForMapping(null); // Clear any active click-to-map selection when dragging starts
+            };
+
+            // Handles starting a drag operation from a shortcut pool item
+            const handleShortcutDragStart = (e, shortcut) => {
+                // Store the entire shortcut object (combo and description) as JSON
+                e.dataTransfer.setData("text/plain", JSON.stringify(shortcut));
+                setDraggedShortcut(shortcut); // Store the shortcut being dragged for visual feedback
+                setSelectedKeyForMapping(null); // Clear any active click-to-map selection when dragging starts
+            };
+
+            // Handles drag end event for visual feedback (clears the dragged item state)
+            const handleDragEnd = () => {
+                setDraggedShortcut(null);
+            };
+
+            // Handles click on a keymap cell for click-to-map functionality
+            const handleKeymapCellClick = (row, col) => {
+                setSelectedKeyForMapping({ row, col });
+                setModalContent({
+                    title: translations.keySelectedTitle[language],
+                    message: translations.keySelectedMessage[language].replace('{row}', row).replace('{col}', col)
+                });
+                setShowModal(true);
+            };
+
+            // Handles click on a shortcut from the pool for click-to-map functionality
+            const handleShortcutClick = (shortcut) => {
+                if (selectedKeyForMapping) {
+                    const { row, col } = selectedKeyForMapping;
+                    setKeymap(prevKeymap => {
+                        const updatedLayer = [...prevKeymap[activeLayer]];
+                        let assignedShortcut = { ...shortcut };
+                        // Ensure custom flag is maintained if it was an AI-generated or manually added shortcut
+                        if (selectedShortcutCategory === "AI GENERATED" || assignedShortcut.isCustomShortcut) {
+                            assignedShortcut.isCustomShortcut = true;
+                        }
+                        updatedLayer[row][col] = { tap: assignedShortcut, hold: null };
+                        return { ...prevKeymap, [activeLayer]: updatedLayer };
+                    });
+                    setSelectedKeyForMapping(null); // Clear selection after mapping
+                    setModalContent({
+                        title: translations.shortcutMappedTitle[language],
+                        message: translations.shortcutMappedMessage[language].replace('{shortcut}', shortcut.description || shortcut.combo).replace('{row}', row).replace('{col}', col)
+                    });
+                    setShowModal(true);
+                } else {
+                    // If no keymap cell is selected, clicking a shortcut could open its details or do nothing.
+                    // For now, we'll just show a message.
+                    setModalContent({
+                        title: translations.noKeySelectedTitle[language],
+                        message: translations.noKeySelectedMessage[language]
+                    });
+                    setShowModal(true);
+                }
+            };
+
+
+            // Saves the current keymap and macros to browser's local storage
+            const saveProfile = () => {
+                const profileData = {
+                    keymap: keymap,
+                    macros: macros,
+                    language: language, // Save the current language
+                    debugMode: debugMode // Save debug mode state
+                };
+                localStorage.setItem("trkey_profile", JSON.stringify(profileData));
+                // Removed modal messages for automatic saving
+            };
+
+            // Loads a saved profile from browser's local storage
+            const loadProfile = () => {
+                const saved = localStorage.getItem("trkey_profile");
+                if (saved) {
+                    const profileData = JSON.parse(saved);
+                    // Ensure keymap has at least layer '0' and all layers are valid 3x3 grids
+                    const loadedKeymap = profileData.keymap || { '0': createEmptyGrid() };
+                    for (const layer in loadedKeymap) {
+                        if (!Array.isArray(loadedKeymap[layer]) || loadedKeymap[layer].length !== 3 || loadedKeymap[layer][0].length !== 3) {
+                            loadedKeymap[layer] = createEmptyGrid();
+                        }
+                    }
+                    setKeymap(loadedKeymap);
+                    setMacros(profileData.macros || []); // Load macros, default to empty array if none
+                    setLanguage(profileData.language || 'en'); // Load language, default to English
+                    setDebugMode(profileData.debugMode || false); // Load debug mode, default to false
+                    // Removed modal messages for automatic loading, except for no profile found
+                } else {
+                    setModalContent({
+                        title: translations.noProfileFoundTitle[language],
+                        message: translations.noProfileFoundMessage[language]
+                    });
+                    setShowModal(true);
+                }
+            };
+
+            // Updates a shortcut within a specific category in the shortcut pool
+            const updatePreset = (app, index, newShortcut) => {
+                setShortcutPool(prevPool => {
+                    const newPool = { ...prevPool };
+                    // Ensure the category exists before attempting to update
+                    if (!newPool[app]) {
+                        newPool[app] = [];
+                    }
+                    newPool[app][index] = newShortcut; // Update the shortcut at the specified index
+                    return newPool;
+                });
+            };
+
+            // Exports the current keymap to the desired JSON format
+            const exportKeymap = () => {
+                const fullMap = {}; // The root object will directly contain layers
+
+                for (const layerNum in keymap) {
+                    const layerGrid = [];
+                    // Iterate through the 3x3 grid row by row, then column by column
+                    for (let r = 0; r < 3; r++) {
+                        const rowKeys = [];
+                        for (let c = 0; c < 3; c++) {
+                            const cell = keymap[layerNum][r][c];
+                            const keyObject = {
+                                tap: cell.tap ? cell.tap.combo : "KC_NO",
+                                hold: null, // Always null as per desired format
+                                combo: null, // Always null as per desired format
+                                description: cell.tap ? cell.tap.description : translations.emptyKey[language]
+                            };
+                            rowKeys.push(keyObject);
+                        }
+                        layerGrid.push(rowKeys);
+                    }
+                    fullMap[layerNum] = layerGrid; // Assign the 2D array to the layer number key
+                }
+
+                // Create a Blob containing the JSON data
+                const blob = new Blob([JSON.stringify(fullMap, null, 2)], { type: "application/json" });
+                // Create a URL for the Blob
+                const url = URL.createObjectURL(blob);
+                // Create a temporary anchor element to trigger the download
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "trkey_config.json"; // Suggested filename
+                document.body.appendChild(a);
+                a.click(); // Programmatically click the anchor to start download
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                // Show a success modal
+                setModalContent({
+                    title: translations.exportSuccessfulTitle[language],
+                    message: translations.exportSuccessfulMessage[language]
+                });
+                setShowModal(true);
+            };
+
+            // Connects to a serial device using Web Serial API
+            const connectToDevice = async () => {
+                if (!('serial' in navigator)) {
+                    setModalContent({
+                        title: translations.webSerialApiNotSupportedTitle[language],
+                        message: translations.webSerialApiNotSupportedMessage[language]
+                    });
+                    setShowModal(true);
+                    return;
+                }
+                try {
+                    // Request permission to access a serial port
+                    const port = await navigator.serial.requestPort();
+                    setConnectedPort(port); // Store the connected port in state
+                    setModalContent({
+                        title: translations.deviceConnectedTitle[language],
+                        message: translations.deviceConnectedMessage[language]
+                    });
+                } catch (err) {
+                    // Handle connection errors
+                    setModalContent({
+                        title: translations.connectionFailedTitle[language],
+                        message: translations.connectionFailedMessage[language].replace('{error}', err.message)
+                    });
+                    setConnectedPort(null); // Clear connected port on failure
+                } finally {
+                    setShowModal(true); // Always show a modal with connection status
+                }
+            };
+
+            // Disconnects from the currently connected serial device
+            const disconnectDevice = async () => {
+                if (connectedPort) {
+                    try {
+                        await connectedPort.close(); // Close the serial port
+                        setConnectedPort(null); // Clear connected port from state
+                        setModalContent({
+                            title: translations.disconnectedTitle[language],
+                            message: translations.disconnectedMessage[language]
+                        });
+                    } catch (err) {
+                        // Handle disconnection errors
+                        setModalContent({
+                            title: translations.disconnectionFailedTitle[language],
+                            message: translations.disconnectionFailedMessage[language].replace('{error}', err.message)
+                        });
+                    } finally {
+                        setShowModal(true); // Always show a modal with disconnection status
+                    }
+                }
+            };
+
+            // Uploads the current keymap configuration to the connected serial device
+            const uploadKeymapToConnectedDevice = async () => {
+                if (!connectedPort) {
+                    // If no device is connected, inform the user
+                    setModalContent({
+                        title: translations.noDeviceConnectedTitle[language],
+                        message: translations.noDeviceConnectedMessage[language]
+                    });
+                    setShowModal(true);
+                    return;
+                }
+
+                try {
+                    // Open the port if it's not already open. Baud rate must match device firmware.
+                    if (connectedPort.readable === null && connectedPort.writable === null) {
+                        await connectedPort.open({ baudRate: 500000 }); // Common baud rate for ESP32
+                    }
+
+                    // Get a writer to send data to the device
+                    const writer = connectedPort.writable.getWriter();
+
+                    // Prepare the keymap data for export (using the new format)
+                    const fullMap = {};
+                    for (const layerNum in keymap) {
+                        const layerGrid = [];
+                        for (let r = 0; r < 3; r++) {
+                            const rowKeys = [];
+                            for (let c = 0; c < 3; c++) {
+                                const cell = keymap[layerNum][r][c];
+                                rowKeys.push({
+                                    tap: cell.tap ? cell.tap.combo : "KC_NO",
+                                    hold: null,
+                                    combo: null,
+                                    description: cell.tap ? cell.tap.description : translations.emptyKey[language]
+                                });
+                            }
+                            layerGrid.push(rowKeys);
+                        }
+                        fullMap[layerNum] = layerGrid;
+                    }
+
+                    const json = JSON.stringify(fullMap); // Convert the full map to a JSON string
+                    const encoder = new TextEncoder(); // Create a TextEncoder to convert string to bytes
+                    await writer.write(encoder.encode(json)); // Write the JSON bytes to the serial port
+                    writer.releaseLock(); // Release the writer lock
+
+                    // Show success modal
+                    setModalContent({
+                        title: translations.uploadSuccessfulTitle[language],
+                        message: translations.uploadSuccessfulMessage[language]
+                    });
+                } catch (err) {
+                    // Handle upload errors
+                    setModalContent({
+                        title: translations.uploadFailedTitle[language],
+                        message: translations.uploadFailedMessage[language].replace('{error}', err.message)
+                    });
+                } finally {
+                    setShowModal(true); // Always show a modal with upload status
+                }
+            };
+
+            // Loads keymap from a JSON string pasted into a text area
+            const loadJsonFromTextArea = () => {
+                try {
+                    const parsedJson = JSON.parse(jsonInput);
+                    const newKeymap = {};
+
+                    // Iterate through top-level keys, assuming they are layer numbers
+                    for (const layerNum in parsedJson) {
+                        const layerData = parsedJson[layerNum];
+                        if (Array.isArray(layerData) && layerData.length === 3 && layerData.every(row => Array.isArray(row) && row.length === 3)) {
+                            const gridLayer = createEmptyGrid(); // Start with an empty 3x3 grid
+
+                            for (let r = 0; r < 3; r++) {
+                                for (let c = 0; c < 3; c++) {
+                                    const keyObject = layerData[r][c];
+                                    if (keyObject && typeof keyObject === 'object' && keyObject.tap) {
+                                        let tapObj = {
+                                            combo: keyObject.tap,
+                                            description: keyObject.description || keyObject.tap,
+                                            hold: keyObject.hold, // Preserve hold if present in JSON
+                                            combo: keyObject.combo // Preserve combo if present in JSON
+                                        };
+
+                                        // Check if it's a macro reference (e.g., "MACRO_1", "MACRO_HELLO_WORLD")
+                                        if (keyObject.tap.startsWith('MACRO_')) {
+                                            tapObj.isMacro = true;
+                                            // For macros loaded from JSON, we rely on the description provided.
+                                            // The actual macro sequence is managed by the 'macros' state,
+                                            // which is loaded from local storage independently.
+                                        } else {
+                                            // Check if it's a known preset or custom shortcut
+                                            const foundPreset = Object.values(presets).flat().find(p => p.combo === keyObject.tap);
+                                            if (!foundPreset) {
+                                                tapObj.isCustomShortcut = true;
+                                            }
+                                        }
+                                        gridLayer[r][c] = { tap: tapObj, hold: null }; // Set hold to null for UI consistency
+                                    } else {
+                                        gridLayer[r][c] = { tap: null, hold: null }; // Default for KC_NO or malformed
+                                    }
+                                }
+                            }
+                            newKeymap[String(layerNum)] = gridLayer; // Store with string key for consistency
+                        } else {
+                            console.warn(`Layer ${layerNum} in JSON is malformed (expected 3x3 grid) and was reset to empty.`);
+                            newKeymap[String(layerNum)] = createEmptyGrid();
+                        }
+                    }
+
+                    // Ensure layer '0' always exists in the new keymap
+                    if (!newKeymap['0']) {
+                        newKeymap['0'] = createEmptyGrid();
+                    }
+                    setKeymap(newKeymap);
+                    setActiveLayer('0'); // Reset active layer to 0 after loading
+
+                    // Note: This function does NOT load macro definitions (sequences) from the JSON,
+                    // as the provided JSON format does not include them. Macro definitions are
+                    // managed by the 'macros' state and loaded from local storage.
+
+                    setModalContent({
+                        title: translations.jsonLoadedTitle[language],
+                        message: translations.jsonLoadedMessage[language]
+                    });
+                } catch (error) {
+                    // Handle any JSON parsing errors
+                    setModalContent({
+                        title: translations.jsonParsingErrorTitle[language],
+                        message: translations.jsonParsingErrorMessage[language].replace('{error}', error.message)
+                    });
+                } finally {
+                    setShowModal(true); // Always show a modal with the result
+                }
+            };
+
+            // Macro functions:
+
+            // Opens the MacroFormModal to add a new macro
+            const handleAddMacro = () => {
+                setEditingMacro(null); // Clear any existing macro data for a new entry
+                setShowMacroFormModal(true);
+            };
+
+            // Opens the MacroFormModal to edit an existing macro
+            const handleEditMacro = (macro) => {
+                setEditingMacro(macro); // Set the macro to be edited
+                setShowMacroFormModal(true);
+            };
+
+            // Saves a new or updated macro to the macros list
+            const handleSaveMacro = (newMacro) => {
+                if (newMacro.id) {
+                    // If macro has an ID, it's an existing macro being edited
+                    setMacros(prev => prev.map(m => m.id === newMacro.id ? newMacro : m));
+                } else {
+                    // If no ID, it's a new macro
+                    setMacros(prev => [...prev, { ...newMacro, id: nextMacroId }]);
+                    setNextMacroId(prev => prev + 1); // Increment ID for the next new macro
+                }
+                setShowMacroFormModal(false); // Close the modal
+            };
+
+            // Initiates the macro deletion process by showing a confirmation modal
+            const handleDeleteMacro = (id) => {
+                setMacroToDeleteId(id); // Store the ID of the macro to be deleted
+                setShowConfirmationModal(true);
+            };
+
+            // Confirms and performs the macro deletion
+            const confirmDeleteMacro = () => {
+                setMacros(prev => prev.filter(m => m.id !== macroToDeleteId)); // Filter out the macro to delete
+                setShowConfirmationModal(false); // Close confirmation modal
+                setMacroToDeleteId(null); // Clear the ID
+            };
+
+            // Function to open the Add Shortcut Modal
+            const handleAddShortcut = () => {
+                setShowAddShortcutModal(true);
+            };
+
+            // Function to save a new shortcut from the Add Shortcut Modal to the current category
+            const handleSaveNewShortcut = (newShortcut) => {
+                setShortcutPool(prevPool => {
+                    const newPool = { ...prevPool };
+                    // Ensure the currently selected category exists before adding
+                    if (!newPool[selectedShortcutCategory]) {
+                        newPool[selectedShortcutCategory] = [];
+                    }
+                    newPool[selectedShortcutCategory].push(newShortcut); // Add the new shortcut
+                    return newPool;
+                });
+                setShowAddShortcutModal(false); // Close the modal after saving
+            };
+
+            // Generates new shortcuts using AI based on user prompt
+            const generateAiShortcuts = async () => {
+                setIsGeneratingAiShortcuts(true); // Set loading state
+                try {
+                    const chatHistory = [];
+                    // Construct the prompt for the AI model
+                    const promptText = `Generate a JSON array of 5-10 common keyboard shortcuts based on the following request: "${aiPrompt}". Each object in the array should have two properties: "combo" (the actual key combination, e.g., "Ctrl+C", "Win+D", "KC_MPLY") and "description" (a brief explanation of what the shortcut does, e.g., "Copy selected text", "Show desktop", "Play/Pause media"). Ensure the output is valid JSON and only contains the array.`;
+
+                    chatHistory.push({ role: "user", parts: [{ text: promptText }] });
+                    const payload = {
+                        contents: chatHistory,
+                        generationConfig: {
+                            responseMimeType: "application/json", // Request JSON output
+                            responseSchema: { // Define the expected JSON schema
+                                type: "ARRAY",
+                                items: {
+                                    type: "OBJECT",
+                                    properties: {
+                                        "combo": { "type": "STRING" },
+                                        "description": { "type": "STRING" }
+                                    },
+                                    "propertyOrdering": ["combo", "description"]
+                                }
+                            }
+                        }
+                    };
+
+                    // IMPORTANT: Replace this with your actual Gemini API Key if you want to use AI features.
+                    // For local development, you might need to enable CORS on your API key.
+                    const apiKey = ""; // <--- YOUR GEMINI API KEY HERE ---
+
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                    // Make the API call to Gemini
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json(); // Parse the JSON response from the API
+
+                    // Check for valid response structure
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const jsonString = result.candidates[0].content.parts[0].text;
+                        const generatedShortcuts = JSON.parse(jsonString); // Parse the generated JSON string
+
+                        if (Array.isArray(generatedShortcuts)) {
+                            // Add generated shortcuts to a new "AI GENERATED" category in the shortcut pool
+                            setShortcutPool(prev => ({
+                                ...prev,
+                                "AI GENERATED": generatedShortcuts.filter(s => s.combo && s.description).map(s => ({ ...s, isCustomShortcut: true })) // Mark as custom
+                            }));
+                            setSelectedShortcutCategory("AI GENERATED"); // Automatically switch to the new category
+                            setModalContent({
+                                title: translations.aiShortcutsGeneratedTitle[language],
+                                message: translations.aiShortcutsGeneratedMessage[language]
+                            });
+                        } else {
+                            throw new Error("AI response was not a valid array of shortcuts.");
+                        }
+                    } else {
+                        throw new Error("No valid response from AI for shortcuts.");
+                    }
+                } catch (error) {
+                    console.error("AI Generation Error:", error);
+                    setModalContent({
+                        title: translations.aiGenerationFailedTitle[language],
+                        message: translations.aiGenerationFailedMessage[language].replace('{error}', error.message)
+                    });
+                } finally {
+                    setIsGeneratingAiShortcuts(false); // Reset loading state
+                    setShowModal(true); // Show modal with status
+                }
+            };
+
+            // Generates new macros using AI based on user prompt
+            const generateAiMacros = async () => {
+                setIsGeneratingAiMacros(true); // Set loading state
+                try {
+                    const chatHistory = [];
+                    // Construct the prompt for the AI model
+                    const promptText = `Generate a JSON array of 1-3 simple macros based on the following request: "${aiMacroPrompt}". Each object in the array should have two properties: "name" (a short descriptive name for the macro) and "sequence" (the key sequence for the macro, e.g., "Hello World!{Enter}", "Ctrl+S{Delay 100}Ctrl+P"). Use common key names like {Enter}, {Tab}, {Space}, {Escape}, {Backspace}, {Delete} for special keys. Ensure the output is valid JSON and only contains the array.`;
+
+                    chatHistory.push({ role: "user", parts: [{ text: promptText }] });
+                    const payload = {
+                        contents: chatHistory,
+                        generationConfig: {
+                            responseMimeType: "application/json", // Request JSON output
+                            responseSchema: { // Define the expected JSON schema
+                                type: "ARRAY",
+                                items: {
+                                    type: "OBJECT",
+                                    properties: {
+                                        "name": { "type": "STRING" },
+                                        "sequence": { "type": "STRING" }
+                                    },
+                                    "propertyOrdering": ["name", "sequence"]
+                                }
+                            }
+                        }
+                    };
+
+                    // IMPORTANT: Replace this with your actual Gemini API Key if you want to use AI features.
+                    // For local development, you might need to enable CORS on your API key.
+                    const apiKey = ""; // <--- YOUR GEMINI API KEY HERE ---
+
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                    // Make the API call to Gemini
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json(); // Parse the JSON response from the API
+
+                    // Check for valid response structure
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const jsonString = result.candidates[0].content.parts[0].text;
+                        const generatedMacros = JSON.parse(jsonString); // Parse the generated JSON string
+
+                        if (Array.isArray(generatedMacros)) {
+                            setMacros(prev => {
+                                let currentId = nextMacroId;
+                                // Map generated macros to include unique IDs and add them to the existing list
+                                const newMacros = generatedMacros.map(m => ({
+                                    id: currentId++,
+                                    name: m.name,
+                                    sequence: m.sequence
+                                }));
+                                setNextMacroId(currentId); // Update the next available macro ID
+                                return [...prev, ...newMacros.filter(m => m.name && m.sequence)]; // Filter out malformed entries
+                            });
+                            setModalContent({
+                                title: translations.aiMacrosGeneratedTitle[language],
+                                message: translations.aiMacrosGeneratedMessage[language]
+                            });
+                        } else {
+                            throw new Error("AI response was not a valid array of macros.");
+                        }
+                    } else {
+                        throw new Error("No valid response from AI for macros.");
+                    }
+                } catch (error) {
+                    console.error("AI Macro Generation Error:", error);
+                    setModalContent({
+                        title: translations.aiMacroGenerationFailedTitle[language],
+                        message: translations.aiMacroGenerationFailedMessage[language].replace('{error}', error.message)
+                    });
+                } finally {
+                    setIsGeneratingAiMacros(false); // Reset loading state
+                    setShowModal(true); // Show modal with status
+                }
+            };
+
+
+            // --- START OF COMPONENT RENDERING ---
+            return (
+                <div className="min-h-screen bg-zinc-800 text-white flex flex-col lg:flex-row font-inter">
+                    {/* Sidebar Navigation */}
+                    <div className="w-full lg:w-64 bg-zinc-900 p-6 flex flex-col border-b lg:border-b-0 lg:border-r border-zinc-700 shadow-xl">
+                        <div className="text-2xl font-bold text-red-500 mb-8">Trkey</div>
+                        <nav className="flex-grow">
+                            <ul className="space-y-4">
+                                <li>
+                                    <a href="#" onClick={() => setActiveTab('keymap')} className={`flex items-center ${activeTab === 'keymap' ? 'text-red-300' : 'text-zinc-400'} hover:text-red-500 font-semibold text-lg transition-colors duration-200`}>
+                                        <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>
+                                        {translations.keymapTab[language]}
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#" onClick={() => setActiveTab('macros')} className={`flex items-center ${activeTab === 'macros' ? 'text-red-300' : 'text-zinc-400'} hover:text-white transition-colors duration-200`}>
+                                        <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20"><path d="M12 6.293V4a1 1 0 00-1-1H5a1 1 0 00-1 1v10a1 1 0 001 1h6a1 1 0 001-1v-2.293l1.707 1.707a1 1 0 001.414-1.414l-4-4a1 1 0 00-1.414 0l-4 4a1 1 0 001.414 1.414L10 10.414V12a1 1 0 001 1h2a1 1 0 001-1V8.293l1.707 1.707a1 1 0 001.414-1.414l-4-4z"></path></svg>
+                                        {translations.macrosTab[language]}
+                                    </a>
+                                </li>
+                                {/* Removed Save + Load tab */}
+                                <li>
+                                    <a href="#" onClick={() => setActiveTab('map-upload')} className={`flex items-center ${activeTab === 'map-upload' ? 'text-red-300' : 'text-zinc-400'} hover:text-white transition-colors duration-200`}>
+                                        <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 2h12v8H4V6zm-2 9a2 2 0 01-2-2v-4a2 2 0 012-2h16a2 2 0 012 2v4a2 2 0 01-2 2H2z"></path></svg>
+                                        {translations.mapUploadTab[language]}
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#" onClick={() => setActiveTab('settings')} className={`flex items-center ${activeTab === 'settings' ? 'text-red-300' : 'text-zinc-400'} hover:text-white transition-colors duration-200`}>
+                                        <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 00-1 1v1a1 1 0 002 0V3a1 1 0 00-1-1zm4 4a1 1 0 011 1v1a1 1 0 01-2 0V7a1 1 0 011-1zM6 6a1 1 0 00-1 1v1a1 1 0 002 0V7a1 1 0 00-1-1zm0 8a1 1 0 00-1 1v1a1 1 0 002 0v-1a1 1 0 00-1-1zm8 0a1 1 0 00-1 1v1a1 1 0 002 0v-1a1 1 0 00-1-1zm-4 4a1 1 0 00-1 1v1a1 1 0 002 0v-1a1 1 0 00-1-1zM2 10a1 1 0 001 1h1a1 1 0 000-2H3a1 1 0 00-1 1zm14 0a1 1 0 001 1h1a1 1 0 000-2h-1a1 1 0 00-1 1zM7 10a3 3 0 116 0 3 3 0 01-6 0z"></path></svg>
+                                        {translations.settingsTab[language]}
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#" onClick={() => setActiveTab('keytester')} className={`flex items-center ${activeTab === 'keytester' ? 'text-red-300' : 'text-zinc-400'} hover:text-white transition-colors duration-200`}>
+                                        <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 00-1 1v10a1 1 0 001 1h12a1 1 0 001-1V5a1 1 0 00-1-1h-3.382l-.724-1.447A1 1 0 0011 2H9zM4 6h12v8H4V6z"></path></svg>
+                                        {translations.keyTesterTab[language]}
+                                    </a>
+                                </li>
+                                {/* New GitHub Link */}
+                                <li>
+                                    <a href="https://github.com/trinibos1/custom_Esp32-Keyboard" target="_blank" rel="noopener noreferrer" className="flex items-center text-zinc-400 hover:text-white transition-colors duration-200">
+                                        <svg className="w-6 h-6 mr-3" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.499.09.679-.217.679-.481 0-.237-.008-.865-.011-1.702-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.46-1.11-1.46-.908-.619.069-.606.069-.606 1.003.07 1.531 1.032 1.531 1.032.892 1.529 2.341 1.088 2.91.828.092-.643.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.93 0-1.09.39-1.984 1.029-2.682-.103-.253-.446-1.272.098-2.65 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.701.114 2.503.363 1.909-1.294 2.747-1.025 2.747-1.025.546 1.379.202 2.398.099 2.65.64.698 1.028 1.592 1.028 2.682 0 3.826-2.339 4.675-4.566 4.922.359.307.678.915.678 1.846 0 1.33-.012 2.41-.012 2.727 0 .266.18.577.685.479C21.133 20.208 24 16.453 24 12.017 24 6.484 19.522 2 14 2h-2z" clipRule="evenodd" />
+                                        </svg>
+                                        {translations.githubLink[language]}
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                        <div className="text-sm text-zinc-500 mt-auto">
+                            <p>{translations.version[language]} 3.2</p>
+                            <p>{translations.builtBy[language]} TriniBos1</p> {/* Added "Built by TriniBos1" */}
+                        </div>
+                    </div>
+
+                    {/* Main Content Area */}
+                    <div className="flex-grow p-4 lg:p-8 bg-zinc-800 flex flex-col">
+                        {/* Top Bar - Simplified for device info */}
+                        <div className="flex justify-end items-center mb-4 pb-4 border-b border-zinc-700">
+                            <div className="text-zinc-500 text-sm sm:text-base">
+                                <span className="mr-1 sm:mr-2">1UP60HSE</span>
+                            </div>
+                        </div>
+
+                        {/* Conditional rendering based on activeTab */}
+                        {activeTab === 'keymap' && (
+                            <>
+                                {/* Keymap Section */}
+                                <div className="mb-6 lg:mb-10">
+                                    <h2 className="text-xl font-bold text-red-300 mb-4">{translations.keymapTab[language]}</h2>
+                                    <div className="flex space-x-2 mb-6">
+                                        {/* Layer selection buttons */}
+                                        {['0', '1', '2', '3'].map(layer => (
+                                            <button
+                                                key={layer}
+                                                onClick={() => setActiveLayer(layer)}
+                                                className={`px-3 py-1 sm:px-4 sm:py-2 rounded-md font-semibold text-sm sm:text-lg transition-colors duration-200 ${activeLayer === layer ? 'bg-red-600 text-white' : 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600'}`}
+                                            >
+                                                {layer}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    {/* Micropad Grid Display */}
+                                    {keymap[activeLayer] && keymap[activeLayer].length > 0 ? (
+                                        <div className="bg-zinc-900 p-4 sm:p-6 rounded-lg shadow-inner border border-zinc-700 w-fit mx-auto">
+                                            <div className="grid grid-cols-3 gap-2">
+                                                {keymap[activeLayer].map((row, rIdx) =>
+                                                    row.map((cell, cIdx) => (
+                                                        <KeyComponent // Render each key using the KeyComponent
+                                                            key={`${rIdx}-${cIdx}`}
+                                                            keyData={cell.tap || {}} // Pass tap data to KeyComponent
+                                                            isMacro={cell.tap && cell.tap.isMacro} // Pass isMacro flag
+                                                            isShortcut={cell.tap && cell.tap.isCustomShortcut} // Pass isCustomShortcut flag
+                                                            onClick={() => handleKeymapCellClick(rIdx, cIdx)} // Click-to-map
+                                                            // Drag and drop props for reordering and assigning
+                                                            draggable
+                                                            onDragStart={(e) => handleKeymapDragStart(e, cell, rIdx, cIdx)}
+                                                            onDrop={(e) => handleDrop(e, rIdx, cIdx)}
+                                                            onDragOver={(e) => e.preventDefault()} // Allow drop
+                                                            onDragEnd={handleDragEnd}
+                                                            // Tailwind classes for styling and hover effects (removed bg-zinc-700 and text-white)
+                                                            customStyles={`
+                                                                w-20 h-20 sm:w-24 sm:h-24 rounded-md shadow-md border
+                                                                flex flex-col justify-center items-center cursor-grab active:cursor-grabbing
+                                                                relative overflow-hidden
+                                                                transform transition-all duration-200
+                                                                ${draggedShortcut ? 'border-dashed border-red-300' : 'hover:bg-red-600 hover:scale-105'}
+                                                                ${selectedKeyForMapping && selectedKeyForMapping.row === rIdx && selectedKeyForMapping.col === cIdx ? 'border-red-400 ring-2 ring-red-400' : 'border-zinc-600'}
+                                                            `}
+                                                        />
+                                                    ))
+                                                )}
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        // Message when the current layer's keymap is empty
+                                        <div className="bg-zinc-900 p-6 rounded-lg shadow-inner border border-zinc-700 h-48 flex items-center justify-center text-zinc-400 text-lg text-center">
+                                            {translations.micropadConfiguredForLayer[language].replace('{layer}', activeLayer)}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Shortcut Pool Section */}
+                                <div className="mt-6 lg:mt-10 w-full">
+                                    <h2 className="text-xl text-red-400 font-bold mb-4">{translations.shortcuts[language]}</h2>
+                                    {/* Category Selection Buttons */}
+                                    <div className="flex flex-wrap gap-2 mb-4 p-2 bg-zinc-900 rounded-lg border border-zinc-700 overflow-x-auto custom-scrollbar">
+                                        {Object.keys(shortcutPool).map(category => (
+                                            <button
+                                                key={category}
+                                                onClick={() => setSelectedShortcutCategory(category)}
+                                                className={`
+                                                    px-4 py-2 rounded-md font-semibold text-sm
+                                                    ${selectedShortcutCategory === category ? 'bg-red-600 text-white' : 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600'}
+                                                    transition-colors duration-200 flex-shrink-0
+                                                `}
+                                            >
+                                                {category.replace(/_/g, ' ')} {/* Display category name nicely */}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    {/* Display Area for Selected Category's Shortcuts */}
+                                    <div className="bg-zinc-900 p-4 rounded-xl shadow-xl border border-red-600">
+                                        <h3 className="text-lg font-semibold mb-3 text-red-300 border-b border-red-500 pb-2">
+                                            {selectedShortcutCategory.replace(/_/g, ' ')} {translations.shortcuts[language]}
+                                        </h3>
+                                        <div className="grid grid-cols-auto-fit-minmax gap-2" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))' }}>
+                                            {shortcutPool[selectedShortcutCategory] && shortcutPool[selectedShortcutCategory].map((s, i) => (
+                                                <div
+                                                    key={`${selectedShortcutCategory}-${i}`}
+                                                    draggable
+                                                    onDragStart={(e) => handleShortcutDragStart(e, s)}
+                                                    onDragEnd={handleDragEnd}
+                                                    onClick={() => handleShortcutClick(s)} // Click-to-map
+                                                    className="
+                                                        w-full h-20 bg-zinc-700 text-white rounded-md shadow-md cursor-grab
+                                                        hover:bg-red-500 hover:scale-105 transition-all duration-200
+                                                        flex flex-col items-center justify-center text-center text-sm font-medium
+                                                        relative overflow-hidden
+                                                    "
+                                                >
+                                                    <span className="relative z-10 px-1">{s.description || s.combo}</span>
+                                                    {/* Hidden input for editing shortcut combo directly */}
+                                                    <input
+                                                        type="text"
+                                                        value={s.combo}
+                                                        onChange={(e) => updatePreset(selectedShortcutCategory, i, { ...s, combo: e.target.value, description: s.description || e.target.value })}
+                                                        onClick={(e) => e.stopPropagation()} // Prevent drag start when clicking input
+                                                        className="absolute inset-0 w-full h-full bg-transparent text-transparent border-none focus:outline-none cursor-text opacity-0"
+                                                        style={{ zIndex: 10 }} // Ensure input is clickable
+                                                    />
+                                                </div>
+                                            ))}
+                                            {/* Button to add a new custom shortcut to the current category */}
+                                            <button
+                                                onClick={handleAddShortcut}
+                                                className="
+                                                    w-full h-20 bg-zinc-800 hover:bg-zinc-700 text-white text-sm py-2 rounded-md transition-colors duration-200
+                                                    flex items-center justify-center shadow-md border border-zinc-600 hover:border-red-500
+                                                "
+                                            >
+                                                {translations.addShortcut[language]}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* AI Shortcut Generator Section */}
+                                    <div className="mt-8 bg-zinc-900 p-4 rounded-xl shadow-xl border border-blue-600">
+                                        <h3 className="text-lg font-semibold mb-3 text-blue-300 border-b border-blue-500 pb-2">{translations.aiPoweredShortcutGenerator[language]}</h3>
+                                        <p className="text-sm text-zinc-400 mb-3">{translations.aiShortcutGeneratorDescription[language]}</p>
+                                        <textarea
+                                            className="w-full h-24 bg-zinc-800 text-white p-3 rounded-md border border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                                            placeholder={translations.aiShortcutGeneratorPlaceholder[language]}
+                                            value={aiPrompt}
+                                            onChange={(e) => setAiPrompt(e.target.value)}
+                                        ></textarea>
+                                        <button
+                                            onClick={generateAiShortcuts}
+                                            disabled={isGeneratingAiShortcuts}
+                                            className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white text-lg py-2 rounded-lg transition-colors duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            {isGeneratingAiShortcuts ? translations.generating[language] : translations.generateWithAI[language]}
+                                        </button>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+
+                        {/* Macros Tab Content */}
+                        {activeTab === 'macros' && (
+                            <div className="w-full max-w-4xl mx-auto">
+                                <h2 className="text-xl font-bold text-red-300 mb-4">{translations.macrosTab[language]}</h2>
+                                <div className="bg-zinc-900 p-6 rounded-lg shadow-inner border border-zinc-700 mb-6">
+                                    <button
+                                        onClick={handleAddMacro}
+                                        className="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-full shadow-lg text-lg font-semibold transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75 mb-4"
+                                    >
+                                        {translations.addMacro[language]}
+                                    </button>
+                                    {macros.length === 0 ? (
+                                        <p className="text-zinc-400">{translations.noMacrosDefined[language]}</p>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {macros.map(macro => (
+                                                <div key={macro.id} className="bg-zinc-800 p-4 rounded-md border border-zinc-700 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                                                    <div className="mb-2 sm:mb-0">
+                                                        <h4 className="font-semibold text-lg text-red-200">{macro.name}</h4>
+                                                        <p className="text-sm text-zinc-300 break-all">{macro.sequence}</p>
+                                                    </div>
+                                                    <div className="flex space-x-2">
+                                                        <button onClick={() => handleEditMacro(macro)} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-sm">{translations.edit[language]}</button>
+                                                        <button onClick={() => handleDeleteMacro(macro.id)} className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm">{translations.delete[language]}</button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* AI Macro Generator Section */}
+                                <div className="mt-8 bg-zinc-900 p-4 rounded-xl shadow-xl border border-blue-600">
+                                    <h3 className="text-lg font-semibold mb-3 text-blue-300 border-b border-blue-500 pb-2">{translations.aiPoweredMacroGenerator[language]}</h3>
+                                    <p className="text-sm text-zinc-400 mb-3">{translations.aiMacroGeneratorDescription[language]}</p>
+                                    <textarea
+                                        className="w-full h-24 bg-zinc-800 text-white p-3 rounded-md border border-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                                        placeholder={translations.aiMacroGeneratorPlaceholder[language]}
+                                        value={aiMacroPrompt}
+                                        onChange={(e) => setAiMacroPrompt(e.target.value)}
+                                    ></textarea>
+                                    <button
+                                        onClick={generateAiMacros}
+                                        disabled={isGeneratingAiMacros}
+                                        className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white text-lg py-2 rounded-lg transition-colors duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {isGeneratingAiMacros ? translations.generating[language] : translations.generateWithAI[language]}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Key Tester Tab Content */}
+                        {activeTab === 'keytester' && (
+                            <div className="w-full max-w-4xl mx-auto">
+                                <h2 className="text-xl font-bold text-red-300 mb-4">{translations.keyTesterTab[language]}</h2>
+                                <div className="bg-zinc-900 p-6 rounded-lg shadow-inner border border-zinc-700 h-64 overflow-y-auto custom-scrollbar">
+                                    <p className="text-zinc-400 mb-4">{translations.keyTesterDescription[language]}</p>
+                                    {pressedKeys.length === 0 ? (
+                                        <p className="text-zinc-500">{translations.noKeysPressed[language]}</p>
+                                    ) : (
+                                        <ul className="space-y-2">
+                                            {pressedKeys.map((keyInfo, index) => (
+                                                <li key={index} className="bg-zinc-700 p-2 rounded-md font-mono text-sm">
+                                                    <span className="text-red-300">{translations.key[language]}:</span> {keyInfo.key} | <span className="text-blue-300">{translations.code[language]}:</span> {keyInfo.code}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Map Upload Tab Content */}
+                        {activeTab === 'map-upload' && (
+                            <div className="flex flex-col items-center justify-center w-full text-zinc-400">
+                                <h2 className="text-xl font-bold text-red-300 mb-4">{translations.mapUploadTab[language]}</h2>
+
+                                <div className="bg-zinc-900 p-6 rounded-lg shadow-inner border border-zinc-700 w-full max-w-4xl mb-8">
+                                    <h3 className="text-lg font-semibold text-red-300 mb-4">{translations.qmkJsonConfiguration[language]}</h3>
+                                    <p className="mb-4 text-sm">
+                                        {translations.qmkJsonDescription[language]}
+                                    </p>
+                                    <div className="flex flex-wrap justify-center gap-4 mb-6">
+                                        <button onClick={exportKeymap} className="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-full shadow-lg text-lg font-semibold transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-75">
+                                            {translations.exportKeymapJson[language]}
+                                        </button>
+                                        {!connectedPort ? (
+                                            <button onClick={connectToDevice} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full shadow-lg text-lg font-semibold transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75">
+                                                {translations.connectToMicropad[language]}
+                                            </button>
+                                        ) : (
+                                            <>
+                                                <button onClick={uploadKeymapToConnectedDevice} className="bg-white text-black hover:bg-zinc-200 px-6 py-3 rounded-full shadow-lg text-lg font-semibold transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-75">
+                                                    {translations.uploadKeymapToDevice[language]}
+                                                </button>
+                                                <button onClick={disconnectDevice} className="bg-zinc-700 hover:bg-zinc-600 text-white px-6 py-3 rounded-full shadow-lg text-lg font-semibold transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-opacity-75">
+                                                    {translations.disconnectMicropad[language]}
+                                                </button>
+                                            </>
+                                        )}
+                                    </div>
+
+                                    <h4 className="text-md font-semibold text-red-300 mb-2">{translations.loadJsonFromTextArea[language]}</h4>
+                                    <textarea
+                                        className="w-full h-40 bg-zinc-800 text-white p-4 rounded-md border border-zinc-600 focus:outline-none focus:ring-2 focus:ring-red-500 font-mono text-sm"
+                                        placeholder={translations.pasteJsonPlaceholder[language]}
+                                        value={jsonInput}
+                                        onChange={(e) => setJsonInput(e.target.value)}
+                                    ></textarea>
+                                    <button
+                                        onClick={loadJsonFromTextArea}
+                                        className="mt-4 w-full bg-red-800 hover:bg-red-900 text-white text-lg py-3 rounded-full transition-colors duration-200 shadow-lg"
+                                    >
+                                        {translations.loadJson[language]}
+                                    </button>
+                                </div>
+
+                                {/* Live JSON Preview */}
+                                <h3 className="text-lg font-semibold text-red-300 mb-2">{translations.currentKeymapJsonPreview[language]}</h3>
+                                <pre className="mt-2 text-sm bg-zinc-900 p-6 rounded-lg text-left w-full max-w-4xl overflow-x-auto border border-red-500 font-mono shadow-inner">
+                                    {/* This JSON.stringify renders the current keymap state as formatted JSON */}
+                                    {JSON.stringify(
+                                        Object.fromEntries(
+                                            Object.keys(keymap).map(layerNum => {
+                                                const layerGrid = [];
+                                                for (let r = 0; r < 3; r++) {
+                                                    const rowKeys = [];
+                                                    for (let c = 0; c < 3; c++) {
+                                                        const cell = keymap[layerNum][r][c];
+                                                        rowKeys.push({
+                                                            tap: cell.tap ? cell.tap.combo : "KC_NO",
+                                                            hold: null,
+                                                            combo: null,
+                                                            description: cell.tap ? cell.tap.description : translations.emptyKey[language]
+                                                        });
+                                                    }
+                                                    layerGrid.push(rowKeys);
+                                                }
+                                                return [layerNum, layerGrid];
+                                            })
+                                        ),
+                                        null, 2
+                                    )}
+                                </pre>
+                            </div>
+                        )}
+
+                        {/* Settings Tab Content */}
+                        {activeTab === 'settings' && (
+                            <div className="flex flex-col items-center justify-center w-full text-zinc-400">
+                                <h2 className="text-xl font-bold text-red-300 mb-4">{translations.settingsTab[language]}</h2>
+
+                                {/* Language Selection */}
+                                <div className="bg-zinc-900 p-6 rounded-lg shadow-inner border border-zinc-700 w-full max-w-4xl mb-8">
+                                    <h3 className="text-lg font-semibold text-red-300 mb-4">{translations.languageSelection[language]}</h3>
+                                    <select
+                                        value={language}
+                                        onChange={(e) => setLanguage(e.target.value)}
+                                        className="w-full bg-zinc-800 text-white p-3 rounded-md border border-zinc-600 focus:outline-none focus:ring-2 focus:ring-red-500"
+                                    >
+                                        <option value="en">{translations.english[language]}</option>
+                                        <option value="ko">{translations.korean[language]}</option>
+                                        <option value="es">{translations.spanish[language]}</option>
+                                    </select>
+                                </div>
+
+                                {/* Debugging Section */}
+                                <div className="bg-zinc-900 p-6 rounded-lg shadow-inner border border-zinc-700 w-full max-w-4xl mb-8">
+                                    <h3 className="text-lg font-semibold text-red-300 mb-4">{translations.debugging[language]}</h3>
+                                    <p className="mb-4 text-sm">{translations.debugModeDescription[language]}</p>
+                                    <button
+                                        onClick={() => setDebugMode(prev => !prev)}
+                                        className={`px-6 py-3 rounded-full shadow-lg text-lg font-semibold transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-opacity-75 ${debugMode ? 'bg-green-600 hover:bg-green-700' : 'bg-zinc-700 hover:bg-zinc-600'}`}
+                                    >
+                                        {debugMode ? translations.disableDebugMode[language] : translations.enableDebugMode[language]}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Modals (these components are defined within this App.js file) */}
+                    {/* General Info/Error Modal */}
+                    <Modal
+                        show={showModal}
+                        title={modalContent.title}
+                        message={modalContent.message}
+                        onClose={() => setShowModal(false)}
+                        customButtons={modalContent.customButtons} // Pass custom buttons if needed
+                        language={language} // Pass language to modal
+                    />
+
+                    {/* Macro Form Modal for adding/editing macros */}
+                    <MacroFormModal
+                        show={showMacroFormModal}
+                        onClose={() => setShowMacroFormModal(false)}
+                        onSave={handleSaveMacro}
+                        macro={editingMacro} // Pass the macro object if editing
+                        language={language} // Pass language to modal
+                    />
+
+                    {/* Confirmation Modal for deleting macros */}
+                    <ConfirmationModal
+                        show={showConfirmationModal}
+                        onClose={() => setShowConfirmationModal(false)}
+                        onConfirm={confirmDeleteMacro}
+                        message={translations.deleteMacroConfirmation[language]}
+                        language={language} // Pass language to modal
+                    />
+
+                    {/* Add Shortcut Modal for adding custom shortcuts */}
+                    <AddShortcutModal
+                        show={showAddShortcutModal}
+                        onClose={() => setShowAddShortcutModal(false)}
+                        onSave={handleSaveNewShortcut}
+                        language={language} // Pass language to modal
+                    />
+                </div>
+            );
+        }
+
+        // Render the React App component into the 'root' div
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
