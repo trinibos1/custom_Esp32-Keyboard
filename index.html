@@ -5,28 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trkey Keymap Configurator</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
-        /* Custom scrollbar styles */
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 8px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #3f3f46; /* zinc-700 */
-            border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #ef4444; /* red-500 */
-            border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #dc2626; /* red-600 */
-        }
-        /* Ensure font is applied */
         body {
-            font-family: sans-serif; /* Using generic sans-serif as Inter is not a standard web font */
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom scrollbar for the shortcut pool */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
         }
     </style>
 </head>
@@ -38,6 +31,111 @@
         // React and ReactDOM are now globally available from the CDN scripts loaded above.
         const { useState, useEffect, useCallback, useRef } = React;
         // ReactDOM is also globally available as ReactDOM
+
+        // This array defines all common keyboard buttons as shortcut options for the Trkey Keymap Configurator.
+        // Each object contains:
+        // - name: A human-readable label for the button.
+        // - combo: The string representation that matches the firmware's sendCombo function.
+        // This list is comprehensive and covers alphanumeric, symbol, function, navigation, modifier, numpad, and media keys.
+        const allKeyboardButtons = [
+            // --- Alphanumeric & Basic Punctuation ---
+            { name: 'A', combo: 'A' }, { name: 'B', combo: 'B' }, { name: 'C', combo: 'C' },
+            { name: 'D', combo: 'D' }, { name: 'E', combo: 'E' }, { name: 'F', combo: 'F' },
+            { name: 'G', combo: 'G' }, { name: 'H', combo: 'H' }, { name: 'I', combo: 'I' },
+            { name: 'J', combo: 'J' }, { name: 'K', combo: 'K' }, { name: 'L', combo: 'L' },
+            { name: 'M', combo: 'M' }, { name: 'N', combo: 'N' }, { name: 'O', combo: 'O' },
+            { name: 'P', combo: 'P' }, { name: 'Q', combo: 'Q' }, { name: 'R', combo: 'R' },
+            { name: 'S', combo: 'S' }, { name: 'T', combo: 'T' }, { name: 'U', combo: 'U' },
+            { name: 'V', combo: 'V' }, { name: 'W', combo: 'W' }, { name: 'X', combo: 'X' },
+            { name: 'Y', combo: 'Y' }, { name: 'Z', combo: 'Z' },
+
+            { name: '0', combo: '0' }, { name: '1', combo: '1' }, { name: '2', combo: '2' },
+            { name: '3', combo: '3' }, { name: '4', combo: '4' }, { name: '5', combo: '5' },
+            { name: '6', combo: '6' }, { name: '7', combo: '7' }, { name: '8', combo: '8' },
+            { name: '9', combo: '9' },
+
+            { name: 'Space', combo: 'SPACE' },
+            { name: '-', combo: '-' }, { name: '=', combo: '=' },
+            { name: '[', combo: '[' }, { name: ']', combo: ']' },
+            { name: '\\', combo: '\\' }, { name: ';', combo: ';' },
+            { name: '\'', combo: '\'' }, { name: ',', combo: ',' },
+            { name: '.', combo: '.' }, { name: '/', combo: '/' },
+            { name: '`', combo: '`' }, // Tilde/backtick key
+
+            // --- Modifiers & Special Keys ---
+            { name: 'Enter', combo: 'ENTER' },
+            { name: 'Tab', combo: 'TAB' },
+            { name: 'Esc', combo: 'ESC' },
+            { name: 'Backspace', combo: 'BACKSPACE' },
+            { name: 'Caps Lock', combo: 'CAPSLOCK' },
+            { name: 'Print Screen', combo: 'PRINTSCREEN' },
+            { name: 'Scroll Lock', combo: 'SCROLLLOCK' },
+            { name: 'Pause', combo: 'PAUSE' },
+            { name: 'Left Ctrl', combo: 'LCTRL' }, { name: 'Right Ctrl', combo: 'RCTRL' },
+            { name: 'Left Shift', combo: 'LSHIFT' }, { name: 'Right Shift', combo: 'RSHIFT' },
+            { name: 'Left Alt', combo: 'LALT' }, { name: 'Right Alt', combo: 'RALT' },
+            { name: 'Left GUI/Win/Cmd', combo: 'LGUI' }, { name: 'Right GUI/Win/Cmd', combo: 'RGUI' },
+            { name: 'Application', combo: 'APPLICATION' }, // Context Menu key
+            { name: 'Power', combo: 'POWER' },
+
+            // --- Navigation Keys ---
+            { name: 'Up Arrow', combo: 'UP' },
+            { name: 'Down Arrow', combo: 'DOWN' },
+            { name: 'Left Arrow', combo: 'LEFT' },
+            { name: 'Right Arrow', combo: 'RIGHT' },
+            { name: 'Home', combo: 'HOME' },
+            { name: 'End', combo: 'END' },
+            { name: 'Page Up', combo: 'PAGEUP' },
+            { name: 'Page Down', combo: 'PAGEDOWN' },
+            { name: 'Insert', combo: 'INSERT' },
+            { name: 'Delete', combo: 'DELETE' },
+
+            // --- Function Keys ---
+            { name: 'F1', combo: 'F1' }, { name: 'F2', combo: 'F2' }, { name: 'F3', combo: 'F3' },
+            { name: 'F4', combo: 'F4' }, { name: 'F5', combo: 'F5' }, { name: 'F6', combo: 'F6' },
+            { name: 'F7', combo: 'F7' }, { name: 'F8', combo: 'F8' }, { name: 'F9', combo: 'F9' },
+            { name: 'F10', combo: 'F10' }, { name: 'F11', combo: 'F11' }, { name: 'F12', combo: 'F12' },
+            { name: 'F13', combo: 'F13' }, { name: 'F14', combo: 'F14' }, { name: 'F15', combo: 'F15' },
+            { name: 'F16', combo: 'F16' }, { name: 'F17', combo: 'F17' }, { name: 'F18', combo: 'F18' },
+            { name: 'F19', combo: 'F19' }, { name: 'F20', combo: 'F20' }, { name: 'F21', combo: 'F21' },
+            { name: 'F22', combo: 'F22' }, { name: 'F23', combo: 'F23' }, { name: 'F24', combo: 'F24' },
+
+            // --- Numpad Keys ---
+            { name: 'Num Lock', combo: 'NUMLOCK' },
+            { name: 'KP /', combo: 'KPSLASH' },
+            { name: 'KP *', combo: 'KPASTERISK' },
+            { name: 'KP -', combo: 'KPMINUS' },
+            { name: 'KP +', combo: 'KPPLUS' },
+            { name: 'KP Enter', combo: 'KPENTER' },
+            { name: 'KP 1', combo: 'KP1' }, { name: 'KP 2', combo: 'KP2' }, { name: 'KP 3', combo: 'KP3' },
+            { name: 'KP 4', combo: 'KP4' }, { name: 'KP 5', combo: 'KP5' }, { name: 'KP 6', combo: 'KP6' },
+            { name: 'KP 7', combo: 'KP7' }, { name: 'KP 8', combo: 'KP8' }, { name: 'KP 9', combo: 'KP9' },
+            { name: 'KP 0', combo: 'KP0' },
+            { name: 'KP .', combo: 'KPDOT' },
+            { name: 'KP =', combo: 'KPEQUAL' },
+
+            // --- Media Keys ---
+            { name: 'Mute', combo: 'MUTE' },
+            { name: 'Volume Up', combo: 'VOLUP' },
+            { name: 'Volume Down', combo: 'VOLDOWN' },
+            { name: 'Play/Pause', combo: 'PLAYPAUSE' },
+            { name: 'Next Track', combo: 'NEXTTRACK' },
+            { name: 'Previous Track', combo: 'PREVTRACK' },
+            { name: 'Brightness Up', combo: 'BRIGHTNESSUP' },
+            { name: 'Brightness Down', combo: 'BRIGHTNESSDOWN' },
+
+            // --- Non-US Specific Keys (common on some layouts) ---
+            { name: 'Non-US Hash', combo: 'NONUSHASH' },
+            { name: 'Non-US Backslash', combo: 'NONUSBACKSLASH' },
+
+            // --- Layer Switching (Example) ---
+            { name: 'Layer 0', combo: 'LAYER+0' },
+            { name: 'Layer 1', combo: 'LAYER+1' },
+            { name: 'Layer 2', combo: 'LAYER+2' },
+            { name: 'Layer 3', combo: 'LAYER+3' },
+            { name: 'Layer 4', combo: 'LAYER+4' },
+        ];
+
 
         // --- START OF PRESETS DATA ---
         const presets = {
@@ -73,6 +171,7 @@
                 { combo: "Ctrl+F", description: "Find" },
                 { combo: "Alt+Shift+F", description: "Format Document" },
             ],
+            "STANDARD_KEYS": allKeyboardButtons, // Add all keyboard buttons as a new preset category
             "WINDOWS_SHORTCUTS": [
                 { combo: "Win+D", description: "Show Desktop" },
                 { combo: "Win+E", description: "Open File Explorer" },
@@ -1431,7 +1530,7 @@
             const [isGeneratingAiMacros, setIsGeneratingAiMacros] = useState(false);
 
             // State for currently selected shortcut category in the pool display
-            const [selectedShortcutCategory, setSelectedShortcutCategory] = useState('BASIC');
+            const [selectedShortcutCategory, setSelectedShortcutCategory] = useState('BASIC'); // Default to BASIC
 
             // State for showing the Add Shortcut Modal
             const [showAddShortcutModal, setShowAddShortcutModal] = useState(false);
@@ -1834,13 +1933,12 @@
                             const rowKeys = [];
                             for (let c = 0; c < 3; c++) {
                                 const cell = keymap[layerNum][r][c];
-                                const keyObject = {
+                                rowKeys.push({
                                     tap: cell.tap ? cell.tap.combo : "KC_NO",
                                     hold: null,
                                     combo: null,
                                     description: cell.tap ? cell.tap.description : translations.emptyKey[language]
-                                };
-                                rowKeys.push(keyObject);
+                                });
                             }
                             layerGrid.push(rowKeys);
                         }
