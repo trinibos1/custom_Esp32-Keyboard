@@ -35,176 +35,184 @@
         // This array defines all common keyboard buttons as shortcut options for the Trkey Keymap Configurator.
         // Each object contains:
         // - name: A human-readable label for the button.
-        // - combo: The string representation that matches the firmware's sendCombo function.
+        // - combo: The string representation that matches the firmware's sendCombo function or qmkToHidMap.
         // This list is comprehensive and covers alphanumeric, symbol, function, navigation, modifier, numpad, and media keys.
         const allKeyboardButtons = [
-            // --- Alphanumeric & Basic Punctuation ---
-            { name: 'A', combo: 'A' }, { name: 'B', combo: 'B' }, { name: 'C', combo: 'C' },
-            { name: 'D', combo: 'D' }, { name: 'E', combo: 'E' }, { name: 'F', combo: 'F' },
-            { name: 'G', combo: 'G' }, { name: 'H', combo: 'H' }, { name: 'I', combo: 'I' },
-            { name: 'J', combo: 'J' }, { name: 'K', combo: 'K' }, { name: 'L', combo: 'L' },
-            { name: 'M', combo: 'M' }, { name: 'N', combo: 'N' }, { name: 'O', combo: 'O' },
-            { name: 'P', combo: 'P' }, { name: 'Q', combo: 'Q' }, { name: 'R', combo: 'R' },
-            { name: 'S', combo: 'S' }, { name: 'T', combo: 'T' }, { name: 'U', combo: 'U' },
-            { name: 'V', combo: 'V' }, { name: 'W', combo: 'W' }, { name: 'X', combo: 'X' },
-            { name: 'Y', combo: 'Y' }, { name: 'Z', combo: 'Z' },
+            // --- Alphanumeric & Basic Punctuation (using KC_ prefix for single keys) ---
+            { name: 'A', combo: 'KC_A' }, { name: 'B', combo: 'KC_B' }, { name: 'C', combo: 'KC_C' },
+            { name: 'D', combo: 'KC_D' }, { name: 'E', combo: 'KC_E' }, { name: 'F', combo: 'KC_F' },
+            { name: 'G', combo: 'KC_G' }, { name: 'H', combo: 'KC_H' }, { name: 'I', combo: 'KC_I' },
+            { name: 'J', combo: 'KC_J' }, { name: 'K', combo: 'KC_K' }, { name: 'L', combo: 'KC_L' },
+            { name: 'M', combo: 'KC_M' }, { name: 'N', combo: 'KC_N' }, { name: 'O', combo: 'KC_O' },
+            { name: 'P', combo: 'KC_P' }, { name: 'Q', combo: 'KC_Q' }, { name: 'R', combo: 'KC_R' },
+            { name: 'S', combo: 'KC_S' }, { name: 'T', combo: 'KC_T' }, { name: 'U', combo: 'KC_U' },
+            { name: 'V', combo: 'KC_V' }, { name: 'W', combo: 'KC_W' }, { name: 'X', combo: 'KC_X' },
+            { name: 'Y', combo: 'KC_Y' }, { name: 'Z', combo: 'KC_Z' },
 
-            { name: '0', combo: '0' }, { name: '1', combo: '1' }, { name: '2', combo: '2' },
-            { name: '3', combo: '3' }, { name: '4', combo: '4' }, { name: '5', combo: '5' },
-            { name: '6', combo: '6' }, { name: '7', combo: '7' }, { name: '8', combo: '8' },
-            { name: '9', combo: '9' },
+            { name: '0', combo: 'KC_0' }, { name: '1', combo: 'KC_1' }, { name: '2', combo: 'KC_2' },
+            { name: '3', combo: 'KC_3' }, { name: '4', combo: 'KC_4' }, { name: '5', combo: 'KC_5' },
+            { name: '6', combo: 'KC_6' }, { name: '7', combo: 'KC_7' }, { name: '8', combo: 'KC_8' },
+            { name: '9', combo: 'KC_9' },
 
-            { name: 'Space', combo: 'SPACE' },
-            { name: '-', combo: '-' }, { name: '=', combo: '=' },
-            { name: '[', combo: '[' }, { name: ']', combo: ']' },
-            { name: '\\', combo: '\\' }, { name: ';', combo: ';' },
-            { name: '\'', combo: '\'' }, { name: ',', combo: ',' },
-            { name: '.', combo: '.' }, { name: '/', combo: '/' },
-            { name: '`', combo: '`' }, // Tilde/backtick key
+            { name: 'Space', combo: 'KC_SPC' },
+            { name: '-', combo: 'KC_MINS' }, { name: '=', combo: 'KC_EQL' },
+            { name: '[', combo: 'KC_LBRC' }, { name: ']', combo: 'KC_RBRC' },
+            { name: '\\', combo: 'KC_BSLS' }, { name: ';', combo: 'KC_SCLN' },
+            { name: '\'', combo: 'KC_QUOT' }, { name: ',', combo: 'KC_COMM' },
+            { name: '.', combo: 'KC_DOT' }, { name: '/', combo: 'KC_SLSH' },
+            { name: '`', combo: 'KC_GRV' }, // Tilde/backtick key
 
-            // --- Modifiers & Special Keys ---
-            { name: 'Enter', combo: 'ENTER' },
-            { name: 'Tab', combo: 'TAB' },
-            { name: 'Esc', combo: 'ESC' },
-            { name: 'Backspace', combo: 'BACKSPACE' },
-            { name: 'Caps Lock', combo: 'CAPSLOCK' },
-            { name: 'Print Screen', combo: 'PRINTSCREEN' },
-            { name: 'Scroll Lock', combo: 'SCROLLLOCK' },
-            { name: 'Pause', combo: 'PAUSE' },
-            { name: 'Left Ctrl', combo: 'LCTRL' }, { name: 'Right Ctrl', combo: 'RCTRL' },
-            { name: 'Left Shift', combo: 'LSHIFT' }, { name: 'Right Shift', combo: 'RSHIFT' },
-            { name: 'Left Alt', combo: 'LALT' }, { name: 'Right Alt', combo: 'RALT' },
-            { name: 'Left GUI/Win/Cmd', combo: 'LGUI' }, { name: 'Right GUI/Win/Cmd', combo: 'RGUI' },
-            { name: 'Application', combo: 'APPLICATION' }, // Context Menu key
-            { name: 'Power', combo: 'POWER' },
+            // --- Modifiers & Special Keys (using KC_ prefix for single modifiers as well) ---
+            { name: 'Enter', combo: 'KC_ENT' },
+            { name: 'Tab', combo: 'KC_TAB' },
+            { name: 'Esc', combo: 'KC_ESC' },
+            { name: 'Backspace', combo: 'KC_BSPC' },
+            { name: 'Caps Lock', combo: 'KC_CAPS' },
+            { name: 'Print Screen', combo: 'KC_PSCR' },
+            { name: 'Scroll Lock', combo: 'KC_SCRL' },
+            { name: 'Pause', combo: 'KC_PAUS' },
+            { name: 'Left Ctrl', combo: 'KC_LCTL' }, { name: 'Right Ctrl', combo: 'KC_RCTL' },
+            { name: 'Left Shift', combo: 'KC_LSFT' }, { name: 'Right Shift', combo: 'KC_RSFT' },
+            { name: 'Left Alt', combo: 'KC_LALT' }, { name: 'Right Alt', combo: 'KC_RALT' },
+            { name: 'Left GUI/Win/Cmd', combo: 'KC_LGUI' }, { name: 'Right GUI/Win/Cmd', combo: 'KC_RGUI' },
+            { name: 'Application', combo: 'KC_APP' }, // Context Menu key
+            { name: 'Power', combo: 'KC_PWR' },
 
             // --- Navigation Keys ---
-            { name: 'Up Arrow', combo: 'UP' },
-            { name: 'Down Arrow', combo: 'DOWN' },
-            { name: 'Left Arrow', combo: 'LEFT' },
-            { name: 'Right Arrow', combo: 'RIGHT' },
-            { name: 'Home', combo: 'HOME' },
-            { name: 'End', combo: 'END' },
-            { name: 'Page Up', combo: 'PAGEUP' },
-            { name: 'Page Down', combo: 'PAGEDOWN' },
-            { name: 'Insert', combo: 'INSERT' },
-            { name: 'Delete', combo: 'DELETE' },
+            { name: 'Up Arrow', combo: 'KC_UP' },
+            { name: 'Down Arrow', combo: 'KC_DOWN' },
+            { name: 'Left Arrow', combo: 'KC_LEFT' },
+            { name: 'Right Arrow', combo: 'KC_RGHT' },
+            { name: 'Home', combo: 'KC_HOME' },
+            { name: 'End', combo: 'KC_END' },
+            { name: 'Page Up', combo: 'KC_PGUP' },
+            { name: 'Page Down', combo: 'KC_PGDN' },
+            { name: 'Insert', combo: 'KC_INS' },
+            { name: 'Delete', combo: 'KC_DEL' },
 
             // --- Function Keys ---
-            { name: 'F1', combo: 'F1' }, { name: 'F2', combo: 'F2' }, { name: 'F3', combo: 'F3' },
-            { name: 'F4', combo: 'F4' }, { name: 'F5', combo: 'F5' }, { name: 'F6', combo: 'F6' },
-            { name: 'F7', combo: 'F7' }, { name: 'F8', combo: 'F8' }, { name: 'F9', combo: 'F9' },
-            { name: 'F10', combo: 'F10' }, { name: 'F11', combo: 'F11' }, { name: 'F12', combo: 'F12' },
-            { name: 'F13', combo: 'F13' }, { name: 'F14', combo: 'F14' }, { name: 'F15', combo: 'F15' },
-            { name: 'F16', combo: 'F16' }, { name: 'F17', combo: 'F17' }, { name: 'F18', combo: 'F18' },
-            { name: 'F19', combo: 'F19' }, { name: 'F20', combo: 'F20' }, { name: 'F21', combo: 'F21' },
-            { name: 'F22', combo: 'F22' }, { name: 'F23', combo: 'F23' }, { name: 'F24', combo: 'F24' },
+            { name: 'F1', combo: 'KC_F1' }, { name: 'F2', combo: 'KC_F2' }, { name: 'F3', combo: 'KC_F3' },
+            { name: 'F4', combo: 'KC_F4' }, { name: 'F5', combo: 'KC_F5' }, { name: 'F6', combo: 'KC_F6' },
+            { name: 'F7', combo: 'KC_F7' }, { name: 'F8', combo: 'KC_F8' }, { name: 'F9', combo: 'KC_F9' },
+            { name: 'F10', combo: 'KC_F10' }, { name: 'F11', combo: 'KC_F11' }, { name: 'F12', combo: 'KC_F12' },
+            { name: 'F13', combo: 'KC_F13' }, { name: 'F14', combo: 'KC_F14' }, { name: 'F15', combo: 'KC_F15' },
+            { name: 'F16', combo: 'KC_F16' }, { name: 'F17', combo: 'KC_F17' }, { name: 'F18', combo: 'KC_F18' },
+            { name: 'F19', combo: 'KC_F19' }, { name: 'F20', combo: 'KC_F20' }, { name: 'F21', combo: 'KC_F21' },
+            { name: 'F22', combo: 'KC_F22' }, { name: 'F23', combo: 'KC_F23' }, { name: 'F24', combo: 'KC_F24' },
 
             // --- Numpad Keys ---
-            { name: 'Num Lock', combo: 'NUMLOCK' },
-            { name: 'KP /', combo: 'KPSLASH' },
-            { name: 'KP *', combo: 'KPASTERISK' },
-            { name: 'KP -', combo: 'KPMINUS' },
-            { name: 'KP +', combo: 'KPPLUS' },
-            { name: 'KP Enter', combo: 'KPENTER' },
-            { name: 'KP 1', combo: 'KP1' }, { name: 'KP 2', combo: 'KP2' }, { name: 'KP 3', combo: 'KP3' },
-            { name: 'KP 4', combo: 'KP4' }, { name: 'KP 5', combo: 'KP5' }, { name: 'KP 6', combo: 'KP6' },
-            { name: 'KP 7', combo: 'KP7' }, { name: 'KP 8', combo: 'KP8' }, { name: 'KP 9', combo: 'KP9' },
-            { name: 'KP 0', combo: 'KP0' },
-            { name: 'KP .', combo: 'KPDOT' },
-            { name: 'KP =', combo: 'KPEQUAL' },
+            { name: 'Num Lock', combo: 'KC_NUM' },
+            { name: 'KP /', combo: 'KC_KPDV' },
+            { name: 'KP *', combo: 'KC_KPMU' },
+            { name: 'KP -', combo: 'KC_KPMI' },
+            { name: 'KP +', combo: 'KC_KPPL' },
+            { name: 'KP Enter', combo: 'KC_KPEN' },
+            { name: 'KP 1', combo: 'KC_KP1' }, { name: 'KP 2', combo: 'KC_KP2' }, { name: 'KP 3', combo: 'KC_KP3' },
+            { name: 'KP 4', combo: 'KC_KP4' }, { name: 'KP 5', combo: 'KC_KP5' }, { name: 'KP 6', combo: 'KC_KP6' },
+            { name: 'KP 7', combo: 'KC_KP7' }, { name: 'KP 8', combo: 'KC_KP8' }, { name: 'KP 9', combo: 'KC_KP9' },
+            { name: 'KP 0', combo: 'KC_KP0' },
+            { name: 'KP .', combo: 'KC_KPDOT' },
+            { name: 'KP =', combo: 'KC_KPEQL' },
 
-            // --- Media Keys ---
-            { name: 'Mute', combo: 'MUTE' },
-            { name: 'Volume Up', combo: 'VOLUP' },
-            { name: 'Volume Down', combo: 'VOLDOWN' },
-            { name: 'Play/Pause', combo: 'PLAYPAUSE' },
-            { name: 'Next Track', combo: 'NEXTTRACK' },
-            { name: 'Previous Track', combo: 'PREVTRACK' },
-            { name: 'Brightness Up', combo: 'BRIGHTNESSUP' },
-            { name: 'Brightness Down', combo: 'BRIGHTNESSDOWN' },
+            // --- Media Keys (using KC_ prefix) ---
+            { name: 'Mute', combo: 'KC_MUTE' },
+            { name: 'Volume Up', combo: 'KC_VOLU' },
+            { name: 'Volume Down', combo: 'KC_VOLD' },
+            { name: 'Play/Pause', combo: 'KC_MPLY' },
+            { name: 'Next Track', combo: 'KC_MNXT' },
+            { name: 'Previous Track', combo: 'KC_MPRV' },
+            // Brightness keys are not standard HID, often handled by OS or specific drivers
+            // { name: 'Brightness Up', combo: 'BRIGHTNESSUP' },
+            // { name: 'Brightness Down', combo: 'BRIGHTNESSDOWN' },
 
-            // --- Non-US Specific Keys (common on some layouts) ---
-            { name: 'Non-US Hash', combo: 'NONUSHASH' },
-            { name: 'Non-US Backslash', combo: 'NONUSBACKSLASH' },
+            // --- Non-US Specific Keys (using KC_ prefix) ---
+            { name: 'Non-US Hash', combo: 'KC_NUHS' },
+            { name: 'Non-US Backslash', combo: 'KC_NONUS_BSLS' },
 
-            // --- Layer Switching (Example) ---
-            { name: 'Layer 0', combo: 'LAYER+0' },
-            { name: 'Layer 1', combo: 'LAYER+1' },
-            { name: 'Layer 2', combo: 'LAYER+2' },
-            { name: 'Layer 3', combo: 'LAYER+3' },
-            { name: 'Layer 4', combo: 'LAYER+4' },
+            // --- Layer Switching (using QMK syntax for firmware interpretation) ---
+            { name: 'Toggle Layer 0', combo: 'TG(0)' },
+            { name: 'Toggle Layer 1', combo: 'TG(1)' },
+            { name: 'Toggle Layer 2', combo: 'TG(2)' },
+            { name: 'Toggle Layer 3', combo: 'TG(3)' },
+            { name: 'Momentary Layer 0', combo: 'MO(0)' },
+            { name: 'Momentary Layer 1', combo: 'MO(1)' },
+            { name: 'Momentary Layer 2', combo: 'MO(2)' },
+            { name: 'Momentary Layer 3', combo: 'MO(3)' },
+            { name: 'To Layer 0', combo: 'TO(0)' },
+            { name: 'To Layer 1', combo: 'TO(1)' },
+            { name: 'To Layer 2', combo: 'TO(2)' },
+            { name: 'To Layer 3', combo: 'TO(3)' },
         ];
 
 
         // --- START OF PRESETS DATA ---
         const presets = {
             "BASIC": [
-                { combo: "M", description: "Move" },
-                { combo: "V", description: "Via" },
-                { combo: "R", description: "Rotate" },
-                { combo: "Del", description: "Delete" },
-                { combo: "Ctrl+Z", description: "Undo" },
-                { combo: "Ctrl+Y", "description": "Redo" },
-                { combo: "F1", description: "Help" },
-                { combo: "F2", description: "Rename" },
-                { combo: "F3", description: "Search" },
-                { combo: "L", description: "Line" },
-                { combo: "E", description: "Extrude" },
-                { combo: "P", description: "Project" },
-                { combo: "C", description: "Circle" },
-                { combo: "Q", description: "Press/Pull" },
-                { combo: "X", description: "Cut" },
-                { combo: "S", description: "Sketch" },
-                { combo: "T", description: "Text" },
-                { combo: "Ctrl+C", description: "Copy" },
-                { combo: "Ctrl+V", description: "Paste" },
-                { combo: "Ctrl+Z", description: "Undo" },
-                { combo: "Ctrl+X", description: "Cut" },
-                { combo: "Ctrl+S", description: "Save" },
-                { combo: "Ctrl+Shift+G", description: "Ungroup" },
-                { combo: "Alt+Shift+B", description: "Bring to Back" },
-                { combo: "Ctrl+D", description: "Duplicate" },
-                { combo: "Ctrl+Alt+K", description: "Lock" },
-                { combo: "Ctrl+P", description: "Command Palette" },
-                { combo: "Ctrl+Shift+P", description: "Show All Commands" },
-                { combo: "Ctrl+F", description: "Find" },
-                { combo: "Alt+Shift+F", description: "Format Document" },
+                { combo: "KC_M", description: "Move" },
+                { combo: "KC_V", description: "Via" },
+                { combo: "KC_R", description: "Rotate" },
+                { combo: "KC_DEL", description: "Delete" },
+                { combo: "LCTL(KC_Z)", description: "Undo" }, // Example of combination
+                { combo: "LCTL(KC_Y)", "description": "Redo" }, // Example of combination
+                { combo: "KC_F1", description: "Help" },
+                { combo: "KC_F2", description: "Rename" },
+                { combo: "KC_F3", description: "Search" },
+                { combo: "KC_L", description: "Line" },
+                { combo: "KC_E", description: "Extrude" },
+                { combo: "KC_P", description: "Project" },
+                { combo: "KC_C", description: "Circle" },
+                { combo: "KC_Q", description: "Press/Pull" },
+                { combo: "KC_X", description: "Cut" },
+                { combo: "KC_S", description: "Sketch" },
+                { combo: "KC_T", description: "Text" },
+                { combo: "LCTL(KC_C)", description: "Copy" },
+                { combo: "LCTL(KC_V)", description: "Paste" },
+                { combo: "LCTL(KC_Z)", description: "Undo" },
+                { combo: "LCTL(KC_X)", description: "Cut" },
+                { combo: "LCTL(KC_S)", description: "Save" },
+                { combo: "LCTL(LSFT(KC_G))", description: "Ungroup" },
+                { combo: "LALT(LSFT(KC_B))", description: "Bring to Back" },
+                { combo: "LCTL(KC_D)", description: "Duplicate" },
+                { combo: "LCTL(LALT(KC_K))", description: "Lock" },
+                { combo: "LCTL(KC_P)", description: "Command Palette" },
+                { combo: "LCTL(LSFT(KC_P))", description: "Show All Commands" },
+                { combo: "LCTL(KC_F)", description: "Find" },
+                { combo: "LALT(LSFT(KC_F))", description: "Format Document" },
             ],
             "STANDARD_KEYS": allKeyboardButtons, // Add all keyboard buttons as a new preset category
             "WINDOWS_SHORTCUTS": [
-                { combo: "Win+D", description: "Show Desktop" },
-                { combo: "Win+E", description: "Open File Explorer" },
-                { combo: "Win+L", description: "Lock Screen" },
-                { combo: "Win+Tab", description: "Task View" },
-                { combo: "Alt+F4", description: "Close App/Shutdown" },
-                { combo: "Ctrl+Shift+Esc", description: "Open Task Manager" },
-                { combo: "Win+PrintScreen", description: "Screenshot to File" },
-                { combo: "Win+.", description: "Emoji Panel" },
-                { combo: "Win+Shift+S", description: "Snip & Sketch" },
+                { combo: "LGUI(KC_D)", description: "Show Desktop" },
+                { combo: "LGUI(KC_E)", description: "Open File Explorer" },
+                { combo: "LGUI(KC_L)", description: "Lock Screen" },
+                { combo: "LGUI(KC_TAB)", description: "Task View" },
+                { combo: "LALT(KC_F4)", description: "Close App/Shutdown" },
+                { combo: "LCTL(LSFT(KC_ESC))", description: "Open Task Manager" },
+                { combo: "LGUI(KC_PSCR)", description: "Screenshot to File" },
+                { combo: "LGUI(KC_DOT)", description: "Emoji Panel" },
+                { combo: "LGUI(LSFT(KC_S))", description: "Snip & Sketch" },
             ],
             "MACOS_SHORTCUTS": [
-                { combo: "Cmd+Space", description: "Spotlight Search" },
-                { combo: "Cmd+C", description: "Copy" },
-                { combo: "Cmd+V", description: "Paste" },
-                { combo: "Cmd+Z", description: "Undo" },
-                { combo: "Cmd+X", description: "Cut" },
-                { combo: "Cmd+S", description: "Save" },
-                { combo: "Cmd+Q", description: "Quit App" },
-                { combo: "Cmd+W", description: "Close Window" },
-                { combo: "Cmd+Tab", description: "Switch Apps" },
-                { combo: "Cmd+Shift+3", description: "Screenshot Full" },
-                { combo: "Cmd+Shift+4", description: "Screenshot Selection" },
+                { combo: "LGUI(KC_SPC)", description: "Spotlight Search" },
+                { combo: "LGUI(KC_C)", description: "Copy" },
+                { combo: "LGUI(KC_V)", description: "Paste" },
+                { combo: "LGUI(KC_Z)", description: "Undo" },
+                { combo: "LGUI(KC_X)", description: "Cut" },
+                { combo: "LGUI(KC_S)", description: "Save" },
+                { combo: "LGUI(KC_Q)", description: "Quit App" },
+                { combo: "LGUI(KC_W)", description: "Close Window" },
+                { combo: "LGUI(KC_TAB)", description: "Switch Apps" },
+                { combo: "LGUI(LSFT(KC_3))", description: "Screenshot Full" },
+                { combo: "LGUI(LSFT(KC_4))", description: "Screenshot Selection" },
             ],
             "LINUX_SHORTCUTS": [
-                { combo: "Ctrl+Alt+T", description: "Open Terminal" },
-                { combo: "Alt+Tab", description: "Switch Windows" },
-                { combo: "Ctrl+Alt+Del", description: "Logout/Shutdown Menu" },
-                { combo: "Super+D", description: "Show Desktop" }, // 'Super' typically is the Windows/Meta key
-                { combo: "Super+L", description: "Lock Screen" },
-                { combo: "Ctrl+Shift+N", description: "New Folder" },
-                { combo: "F2", description: "Rename File" },
-                { combo: "PrintScreen", description: "Screenshot" },
+                { combo: "LCTL(LALT(KC_T))", description: "Open Terminal" },
+                { combo: "LALT(KC_TAB)", description: "Switch Windows" },
+                { combo: "LCTL(LALT(KC_DEL))", description: "Logout/Shutdown Menu" },
+                { combo: "LGUI(KC_D)", description: "Show Desktop" }, // 'Super' typically is the Windows/Meta key
+                { combo: "LGUI(KC_L)", description: "Lock Screen" },
+                { combo: "LCTL(LSFT(KC_N))", description: "New Folder" },
+                { combo: "KC_F2", description: "Rename File" },
+                { combo: "KC_PSCR", description: "Screenshot" },
                 { combo: "ls", description: "List directory contents" },
                 { combo: "cd", description: "Change directory" },
                 { combo: "pwd", description: "Print working directory" },
@@ -238,299 +246,322 @@
                 { combo: "uptime", description: "Show system uptime" },
             ],
             "ANDROID_SHORTCUTS": [
-                { combo: "RecentApps", description: "Show Recent Apps" },
-                { combo: "Home", description: "Go Home" },
-                { combo: "Back", description: "Go Back" },
-                { combo: "VolumeUp", description: "Volume Up" },
-                { combo: "VolumeDown", description: "Volume Down" },
-                { combo: "Power", description: "Power Button" },
-                { combo: "Search", description: "Open Search" },
-                { combo: "Camera", description: "Open Camera" },
+                { combo: "RecentApps", description: "Show Recent Apps" }, // Placeholder, needs specific HID usage
+                { combo: "KC_HOME", description: "Go Home" },
+                { combo: "KC_BSPC", description: "Go Back" }, // Often Backspace or Esc
+                { combo: "KC_VOLU", description: "Volume Up" },
+                { combo: "KC_VOLD", description: "Volume Down" },
+                { combo: "KC_PWR", description: "Power Button" },
+                { combo: "Search", description: "Open Search" }, // Placeholder, needs specific HID usage
+                { combo: "Camera", description: "Open Camera" }, // Placeholder, needs specific HID usage
             ],
             "IPAD_SHORTCUTS": [
-                { combo: "Cmd+Space", description: "Search/Spotlight" },
-                { combo: "Cmd+H", description: "Go Home" },
-                { combo: "Cmd+Tab", description: "Switch Apps" },
-                { combo: "Cmd+Shift+3", description: "Screenshot Full" },
-                { combo: "Cmd+Shift+4", description: "Screenshot Selection" },
-                { combo: "Globe+C", description: "Copy (Contextual)" }, // Globe key is common on iPad keyboards
-                { combo: "Globe+V", description: "Paste (Contextual)" },
-                { combo: "Globe+Z", description: "Undo (Contextual)" },
+                { combo: "LGUI(KC_SPC)", description: "Search/Spotlight" },
+                { combo: "LGUI(KC_H)", description: "Go Home" },
+                { combo: "LGUI(KC_TAB)", description: "Switch Apps" },
+                { combo: "LGUI(LSFT(KC_3))", description: "Screenshot Full" },
+                { combo: "LGUI(LSFT(KC_4))", description: "Screenshot Selection" },
+                { combo: "KC_LALT(KC_C)", description: "Copy (Contextual)" }, // Globe key is often Alt
+                { combo: "KC_LALT(KC_V)", description: "Paste (Contextual)" },
+                { combo: "KC_LALT(KC_Z)", description: "Undo (Contextual)" },
             ],
             "MINECRAFT_SHORTCUTS": [
-                { combo: "W", description: "Move forward" },
-                { combo: "A", description: "Move left" },
-                { combo: "S", description: "Move backward" },
-                { combo: "D", description: "Move right" },
-                { combo: "Space", description: "Jump" },
-                { combo: "Shift", description: "Sneak" },
-                { combo: "Ctrl", description: "Sprint" },
-                { combo: "E", description: "Open inventory" },
-                { combo: "Q", description: "Drop selected item" },
-                { combo: "T", description: "Open chat" },
-                { combo: "F3+D", description: "Clear chat" },
-                { combo: "F5", description: "Change camera" },
-                { combo: "F8", description: "Smooth camera" },
-                { combo: "Tab", description: "Player list" },
-                { combo: "Esc", description: "Menu" },
-                { combo: "Middle Click", description: "Pick block (Creative)" },
-                { combo: "Double Space", description: "Fly toggle (Creative)" },
-                { combo: "Ctrl+Middle Click", description: "Copy block with NBT" },
-                { combo: "Shift+Left Click", description: "Destroy instantly (Creative)" },
-                { combo: "Shift+Right Click", description: "Edit command block (Creative)" },
-                { combo: "Shift+Click", description: "Move stack (Inventory)" },
-                { combo: "Ctrl+Q", description: "Drop stack" },
-                { combo: "Ctrl+Click", description: "Select same items" },
-                { combo: "Double Click", description: "Grab all of that item" },
-                { combo: "Mouse wheel", description: "Scroll hotbar" },
-                { combo: "Number+Hover", description: "Move item to hotbar" },
-                { combo: "F3+N", description: "Switch gamemode" },
-                { combo: "Alt+F4", description: "Rage quit" },
-                { combo: "F3+C", description: "Force crash" },
-                { combo: "F3+A", description: "Reload chunks" },
-                { combo: "Shift+Click", description: "Craft all (in recipe book)" },
+                { combo: "KC_W", description: "Move forward" },
+                { combo: "KC_A", description: "Move left" },
+                { combo: "KC_S", description: "Move backward" },
+                { combo: "KC_D", description: "Move right" },
+                { combo: "KC_SPC", description: "Jump" },
+                { combo: "KC_LSFT", description: "Sneak" },
+                { combo: "KC_LCTL", description: "Sprint" },
+                { combo: "KC_E", description: "Open inventory" },
+                { combo: "KC_Q", description: "Drop selected item" },
+                { combo: "KC_T", description: "Open chat" },
+                { combo: "KC_F3+KC_D", description: "Clear chat" },
+                { combo: "KC_F5", description: "Change camera" },
+                { combo: "KC_F8", description: "Smooth camera" },
+                { combo: "KC_TAB", description: "Player list" },
+                { combo: "KC_ESC", description: "Menu" },
+                { combo: "Middle Click", description: "Pick block (Creative)" }, // Not a standard HID keycode
+                { combo: "Double Space", description: "Fly toggle (Creative)" }, // Not a single HID keycode
+                { combo: "LCTL(Middle Click)", description: "Copy block with NBT" }, // Not a standard HID keycode
+                { combo: "LSFT(KC_LEFT_CLICK)", description: "Destroy instantly (Creative)" }, // Not a standard HID keycode
+                { combo: "LSFT(KC_RIGHT_CLICK)", description: "Edit command block (Creative)" }, // Not a standard HID keycode
+                { combo: "LSFT(KC_CLICK)", description: "Move stack (Inventory)" }, // Not a standard HID keycode
+                { combo: "LCTL(KC_Q)", description: "Drop stack" },
+                { combo: "LCTL(KC_CLICK)", description: "Select same items" }, // Not a standard HID keycode
+                { combo: "Double Click", description: "Grab all of that item" }, // Not a single HID keycode
+                { combo: "Mouse wheel", description: "Scroll hotbar" }, // Not a standard HID keycode
+                { combo: "Number+Hover", description: "Move item to hotbar" }, // Not a standard HID keycode
+                { combo: "KC_F3+KC_N", description: "Switch gamemode" },
+                { combo: "LALT(KC_F4)", description: "Rage quit" },
+                { combo: "KC_F3+KC_C", description: "Force crash" },
+                { combo: "KC_F3+KC_A", description: "Reload chunks" },
+                { combo: "LSFT(KC_CLICK)", description: "Craft all (in recipe book)" }, // Not a standard HID keycode
             ],
             "WAR_THUNDER_SHORTCUTS": [
-                { combo: "W/S", description: "Throttle up/down" },
-                { combo: "A/D", description: "Rudder left/right" },
-                { combo: "Q/E", description: "Roll left/right" },
-                { combo: "Shift", description: "Afterburner" },
-                { combo: "Ctrl", description: "Air brake" },
-                { combo: "G", description: "Landing gear" },
-                { combo: "F", description: "Flaps" },
-                { combo: "V", description: "View mode" },
-                { combo: "C", description: "Free camera" },
-                { combo: "X", description: "Look left" },
-                { combo: "Z", description: "Look right" },
-                { combo: "Y", description: "Look back" },
-                { combo: "B", description: "Bomb view" },
-                { combo: "N", description: "Navigation lights" },
-                { combo: "J", description: "Bail out" },
-                { combo: "M", description: "Map" },
-                { combo: "Tab", description: "Scoreboard" },
-                { combo: "T", description: "Target" },
-                { combo: "R", description: "Radar" },
-                { combo: "H", description: "Head tracking" },
-                { combo: "Space", description: "Fire main guns" },
-                { combo: "Alt", description: "Fire secondary" },
-                { combo: "Ctrl+Space", description: "Drop bomb" },
-                { combo: "Shift+Space", description: "Fire rocket" },
-                { combo: "Mouse 2", description: "Zoom" },
-                { combo: "Mouse 1", description: "Fire guns" },
-                { combo: "Mouse 3", description: "Track enemy" },
-                { combo: "F1", description: "Help" },
-                { combo: "F2", description: "Toggle cockpit" },
-                { combo: "F3", description: "Chase camera" },
-                { combo: "W/A/S/D", description: "Drive (Tank)" },
-                { combo: "Shift", description: "Speed boost" },
-                { combo: "V", description: "Binocular view" },
-                { combo: "U", description: "Repair" },
-                { combo: "O", description: "Toggle optics" },
-                { combo: "K", description: "Thermal/IR" },
-                { combo: "L", description: "Headlights" },
-                { combo: "R", description: "Rangefinder" },
-                { combo: "C", description: "Commander cam" },
-                { combo: "X", description: "Machine gun" },
-                { combo: "Esc", description: "Menu" },
-                { combo: "Enter", description: "Chat" },
-                { combo: "Backspace", description: "Leave vehicle" },
-                { combo: "Home", description: "Reset view" },
-                { combo: "Del", description: "Zoom out" },
-                { combo: "Ins", description: "Zoom in" },
-                { combo: "Alt+F10", description: "Save replay" },
-                { combo: "Alt+PrintScreen", description: "Screenshot" },
-                { combo: "Ctrl+Y", description: "Chat channel" },
-                { combo: "Ctrl+G", description: "Gunner view" },
+                { combo: "KC_W/KC_S", description: "Throttle up/down" },
+                { combo: "KC_A/KC_D", description: "Rudder left/right" },
+                { combo: "KC_Q/KC_E", description: "Roll left/right" },
+                { combo: "KC_LSFT", description: "Afterburner" },
+                { combo: "KC_LCTL", description: "Air brake" },
+                { combo: "KC_G", description: "Landing gear" },
+                { combo: "KC_F", description: "Flaps" },
+                { combo: "KC_V", description: "View mode" },
+                { combo: "KC_C", description: "Free camera" },
+                { combo: "KC_X", description: "Look left" },
+                { combo: "KC_Z", description: "Look right" },
+                { combo: "KC_Y", description: "Look back" },
+                { combo: "KC_B", description: "Bomb view" },
+                { combo: "KC_N", description: "Navigation lights" },
+                { combo: "KC_J", description: "Bail out" },
+                { combo: "KC_M", description: "Map" },
+                { combo: "KC_TAB", description: "Scoreboard" },
+                { combo: "KC_T", description: "Target" },
+                { combo: "KC_R", description: "Radar" },
+                { combo: "KC_H", description: "Head tracking" },
+                { combo: "KC_SPC", description: "Fire main guns" },
+                { combo: "KC_LALT", description: "Fire secondary" },
+                { combo: "LCTL(KC_SPC)", description: "Drop bomb" },
+                { combo: "LSFT(KC_SPC)", description: "Fire rocket" },
+                { combo: "Mouse 2", description: "Zoom" }, // Not a standard HID keycode
+                { combo: "Mouse 1", description: "Fire guns" }, // Not a standard HID keycode
+                { combo: "Mouse 3", description: "Track enemy" }, // Not a standard HID keycode
+                { combo: "KC_F1", description: "Help" },
+                { combo: "KC_F2", description: "Toggle cockpit" },
+                { combo: "KC_F3", description: "Chase camera" },
+                { combo: "KC_W/KC_A/KC_S/KC_D", description: "Drive (Tank)" },
+                { combo: "KC_LSFT", description: "Speed boost" },
+                { combo: "KC_V", description: "Binocular view" },
+                { combo: "KC_U", description: "Repair" },
+                { combo: "KC_O", description: "Toggle optics" },
+                { combo: "KC_K", description: "Thermal/IR" },
+                { combo: "KC_L", description: "Headlights" },
+                { combo: "KC_R", description: "Rangefinder" },
+                { combo: "KC_C", description: "Commander cam" },
+                { combo: "KC_X", description: "Machine gun" },
+                { combo: "KC_ESC", description: "Menu" },
+                { combo: "KC_ENT", description: "Chat" },
+                { combo: "KC_BSPC", description: "Leave vehicle" },
+                { combo: "KC_HOME", description: "Reset view" },
+                { combo: "KC_DEL", description: "Zoom out" },
+                { combo: "KC_INS", description: "Zoom in" },
+                { combo: "LALT(KC_F10)", description: "Save replay" },
+                { combo: "LALT(KC_PSCR)", description: "Screenshot" },
+                { combo: "LCTL(KC_Y)", description: "Chat channel" },
+                { combo: "LCTL(KC_G)", description: "Gunner view" },
             ],
             "ROBLOX_STUDIO_SHORTCUTS": [
-                { combo: "Ctrl+S", description: "Save" },
-                { combo: "Ctrl+Shift+S", description: "Save As" },
-                { combo: "Ctrl+N", description: "New place" },
-                { combo: "Ctrl+O", description: "Open place" },
-                { combo: "Ctrl+Z", description: "Undo" },
-                { combo: "Ctrl+Y", description: "Redo" },
-                { combo: "Ctrl+C/V/X", description: "Copy/Paste/Cut" },
-                { combo: "Ctrl+D", description: "Duplicate" },
-                { combo: "Ctrl+G", description: "Group" },
-                { combo: "Ctrl+U", description: "Ungroup" },
-                { combo: "Ctrl+P", description: "Publish" },
-                { combo: "F", description: "Focus selection" },
-                { combo: "Shift+F", description: "Follow camera" },
-                { combo: "Alt+Click", description: "Select parent" },
-                { combo: "Ctrl+Click", description: "Multi-select" },
-                { combo: "Ctrl+Shift+H", description: "View explorer" },
-                { combo: "Ctrl+Shift+X", description: "Properties" },
-                { combo: "Ctrl+Shift+C", description: "Output" },
-                { combo: "Ctrl+Shift+D", description: "Asset manager" },
-                { combo: "Ctrl+Shift+E", description: "Toolbox" },
-                { combo: "W/A/S/D", description: "Camera move" },
-                { combo: "E/Q", description: "Move up/down" },
-                { combo: "T", description: "Rotate" },
-                { combo: "R", description: "Resize" },
-                { combo: "G", description: "Move" },
-                { combo: "Ctrl+T", description: "Anchor" },
-                { combo: "Ctrl+L", description: "Lock" },
-                { combo: "Ctrl+B", description: "Break joints" },
-                { combo: "Ctrl+J", description: "Join surfaces" },
-                { combo: "Ctrl+M", description: "Material" },
-                { combo: "Ctrl+Shift+M", description: "Model" },
-                { combo: "Shift+Drag", description: "Constrain" },
-                { combo: "Arrow Keys", description: "Nudge" },
-                { combo: "Ctrl+P", description: "Quick publish" },
-                { combo: "Alt+Shift+E", description: "Export" },
-                { combo: "Ctrl+S", description: "Save" },
+                { combo: "LCTL(KC_S)", description: "Save" },
+                { combo: "LCTL(LSFT(KC_S))", description: "Save As" },
+                { combo: "LCTL(KC_N)", description: "New place" },
+                { combo: "LCTL(KC_O)", description: "Open place" },
+                { combo: "LCTL(KC_Z)", description: "Undo" },
+                { combo: "LCTL(KC_Y)", description: "Redo" },
+                { combo: "LCTL(KC_C)", description: "Copy" },
+                { combo: "LCTL(KC_V)", description: "Paste" },
+                { combo: "LCTL(KC_X)", description: "Cut" },
+                { combo: "LCTL(KC_D)", description: "Duplicate" },
+                { combo: "LCTL(KC_G)", description: "Group" },
+                { combo: "LCTL(KC_U)", description: "Ungroup" },
+                { combo: "LCTL(KC_P)", description: "Publish" },
+                { combo: "KC_F", description: "Focus selection" },
+                { combo: "LSFT(KC_F)", description: "Follow camera" },
+                { combo: "LALT(KC_CLICK)", description: "Select parent" }, // Not standard HID
+                { combo: "LCTL(KC_CLICK)", description: "Multi-select" }, // Not standard HID
+                { combo: "LCTL(LSFT(KC_H))", description: "View explorer" },
+                { combo: "LCTL(LSFT(KC_X))", description: "Properties" },
+                { combo: "LCTL(LSFT(KC_C))", description: "Output" },
+                { combo: "LCTL(LSFT(KC_D))", description: "Asset manager" },
+                { combo: "LCTL(LSFT(KC_E))", description: "Toolbox" },
+                { combo: "KC_W/KC_A/KC_S/KC_D", description: "Camera move" },
+                { combo: "KC_E/KC_Q", description: "Move up/down" },
+                { combo: "KC_T", description: "Rotate" },
+                { combo: "KC_R", description: "Resize" },
+                { combo: "KC_G", description: "Move" },
+                { combo: "LCTL(KC_T)", description: "Anchor" },
+                { combo: "LCTL(KC_L)", description: "Lock" },
+                { combo: "LCTL(KC_B)", description: "Break joints" },
+                { combo: "LCTL(KC_J)", description: "Join surfaces" },
+                { combo: "LCTL(KC_M)", description: "Material" },
+                { combo: "LCTL(LSFT(KC_M))", description: "Model" },
+                { combo: "LSFT(KC_DRAG)", description: "Constrain" }, // Not standard HID
+                { combo: "Arrow Keys", description: "Nudge" }, // Needs specific arrow key combos
+                { combo: "LCTL(KC_P)", description: "Quick publish" },
+                { combo: "LALT(LSFT(KC_E))", description: "Export" },
+                { combo: "LCTL(KC_S)", description: "Save" },
             ],
             "ENLISTED_SHORTCUTS": [
-                { combo: "W/A/S/D", description: "Move" },
-                { combo: "Space", description: "Jump" },
-                { combo: "Shift", description: "Sprint" },
-                { combo: "Ctrl", description: "Crouch" },
-                { combo: "Z", description: "Prone" },
-                { combo: "X", description: "Lean left" },
-                { combo: "C", description: "Lean right" },
-                { combo: "F", description: "Interact" },
-                { combo: "R", description: "Reload" },
-                { combo: "G", description: "Grenade" },
-                { combo: "T", description: "Pick weapon" },
-                { combo: "V", description: "Melee" },
-                { combo: "B", description: "Fire mode" },
-                { combo: "Q/E", description: "Switch soldier" },
-                { combo: "Tab", description: "Scoreboard" },
-                { combo: "M", description: "Map" },
-                { combo: "N", description: "Night vision" },
-                { combo: "Y", description: "Orders" },
-                { combo: "L", description: "Flashlight" },
-                { combo: "Esc", description: "Menu" },
-                { combo: "Click", description: "Fire" },
-                { combo: "Right Click", description: "Aim" },
-                { combo: "Scroll", description: "Change weapon" },
-                { combo: "1-3", description: "Weapons" },
-                { combo: "H", description: "Help" },
-                { combo: "Alt", description: "Free look" },
-                { combo: "Ctrl+Shift", description: "Walk" },
-                { combo: "F1", description: "Camera" },
-                { combo: "Alt+M", description: "Minimap" },
-                { combo: "Ctrl+R", description: "Reload prone" },
-                { combo: "Ctrl+F1", description: "Switch class" },
-                { combo: "Alt+V", description: "Change view" },
-                { combo: "Middle Mouse", description: "Ping" },
-                { combo: "Hold T", description: "Mark enemy" },
-                { combo: "Hold Shift", description: "Sprint long" },
-                { combo: "Hold F", description: "Plant/diffuse" },
-                { combo: "Ctrl+Number", description: "Squad command" },
-                { combo: "Shift+1-4", description: "Formations" },
-                { combo: "K", description: "Kill feed" },
-                { combo: "U", description: "Medkit" },
-                { combo: "1", description: "Inventory" },
-                { combo: "Backspace", description: "Suicide" },
-                { combo: "Del", description: "Respawn" },
-                { combo: "F3", description: "Record" },
-                { combo: "F12", description: "Screenshot" },
-                { combo: "Tilde", description: "Console" },
-                { combo: "Ctrl+Alt+Delete", description: "Force quit" },
+                { combo: "KC_W/KC_A/KC_S/KC_D", description: "Move" },
+                { combo: "KC_SPC", description: "Jump" },
+                { combo: "KC_LSFT", description: "Sprint" },
+                { combo: "KC_LCTL", description: "Crouch" },
+                { combo: "KC_Z", description: "Prone" },
+                { combo: "KC_X", description: "Lean left" },
+                { combo: "KC_C", description: "Lean right" },
+                { combo: "KC_F", description: "Interact" },
+                { combo: "KC_R", description: "Reload" },
+                { combo: "KC_G", description: "Grenade" },
+                { combo: "KC_T", description: "Pick weapon" },
+                { combo: "KC_V", description: "Melee" },
+                { combo: "KC_B", description: "Fire mode" },
+                { combo: "KC_Q/KC_E", description: "Switch soldier" },
+                { combo: "KC_TAB", description: "Scoreboard" },
+                { combo: "KC_M", description: "Map" },
+                { combo: "KC_N", description: "Night vision" },
+                { combo: "KC_Y", description: "Orders" },
+                { combo: "KC_L", description: "Flashlight" },
+                { combo: "KC_ESC", description: "Menu" },
+                { combo: "KC_LEFT_CLICK", description: "Fire" }, // Not standard HID
+                { combo: "KC_RIGHT_CLICK", description: "Aim" }, // Not standard HID
+                { combo: "KC_SCROLL", description: "Change weapon" }, // Not standard HID
+                { combo: "KC_1/KC_2/KC_3", description: "Weapons" },
+                { combo: "KC_H", description: "Help" },
+                { combo: "KC_LALT", description: "Free look" },
+                { combo: "LCTL(LSFT)", description: "Walk" },
+                { combo: "KC_F1", description: "Camera" },
+                { combo: "LALT(KC_M)", description: "Minimap" },
+                { combo: "LCTL(KC_R)", description: "Reload prone" },
+                { combo: "LCTL(KC_F1)", description: "Switch class" },
+                { combo: "LALT(KC_V)", description: "Change view" },
+                { combo: "KC_MIDDLE_CLICK", description: "Ping" }, // Not standard HID
+                { combo: "HOLD(KC_T)", description: "Mark enemy" }, // Not standard HID
+                { combo: "HOLD(KC_LSFT)", description: "Sprint long" }, // Not standard HID
+                { combo: "HOLD(KC_F)", description: "Plant/diffuse" }, // Not standard HID
+                { combo: "LCTL(KC_NUMBER)", description: "Squad command" }, // Needs specific number
+                { combo: "LSFT(KC_1/KC_2/KC_3/KC_4)", description: "Formations" },
+                { combo: "KC_K", description: "Kill feed" },
+                { combo: "KC_U", description: "Medkit" },
+                { combo: "KC_1", description: "Inventory" },
+                { combo: "KC_BSPC", description: "Suicide" },
+                { combo: "KC_DEL", description: "Respawn" },
+                { combo: "KC_F3", description: "Record" },
+                { combo: "KC_F12", description: "Screenshot" },
+                { combo: "KC_GRV", description: "Console" },
+                { combo: "LCTL(LALT(KC_DEL))", description: "Force quit" },
             ],
             "CODING_IDE_SHORTCUTS": [
-                { combo: "Ctrl+P", description: "Quick open file" },
-                { combo: "Ctrl+Shift+P", description: "Command palette" },
-                { combo: "Ctrl+`", description: "Terminal toggle" },
-                { combo: "Ctrl+B", description: "Sidebar toggle" },
-                { combo: "Ctrl+J", description: "Panel toggle" },
-                { combo: "Ctrl+Shift+E", description: "Explorer" },
-                { combo: "Ctrl+Shift+F", description: "Search in files" },
-                { combo: "Ctrl+Shift+G", description: "Git" },
-                { combo: "Ctrl+Shift+D", description: "Debug" },
-                { combo: "Ctrl+Shift+X", description: "Extensions" },
-                { combo: "Ctrl+Space", description: "Trigger suggestion" },
-                { combo: "Ctrl+/-", description: "Comment line" },
-                { combo: "Alt+Up/Down", description: "Move line" },
-                { combo: "Shift+Alt+Down", description: "Copy line down" },
-                { combo: "Ctrl+Shift+K", description: "Delete line" },
-                { combo: "Ctrl+D", description: "Select next occurrence" },
-                { combo: "Ctrl+L", description: "Select line" },
-                { combo: "Ctrl+Enter", description: "Insert line below" },
-                { combo: "Ctrl+Shift+Enter", description: "Insert line above" },
-                { combo: "Ctrl+Tab", description: "Next editor" },
-                { combo: "Ctrl+Shift+Tab", description: "Previous editor" },
-                { combo: "Ctrl+W", description: "Close editor" },
+                { combo: "LCTL(KC_P)", description: "Quick open file" },
+                { combo: "LCTL(LSFT(KC_P))", description: "Command palette" },
+                { combo: "LCTL(KC_GRV)", description: "Terminal toggle" },
+                { combo: "LCTL(KC_B)", description: "Sidebar toggle" },
+                { combo: "LCTL(KC_J)", description: "Panel toggle" },
+                { combo: "LCTL(LSFT(KC_E))", description: "Explorer" },
+                { combo: "LCTL(LSFT(KC_F))", description: "Search in files" },
+                { combo: "LCTL(LSFT(KC_G))", description: "Git" },
+                { combo: "LCTL(LSFT(KC_D))", description: "Debug" },
+                { combo: "LCTL(LSFT(KC_X))", description: "Extensions" },
+                { combo: "LCTL(KC_SPC)", description: "Trigger suggestion" },
+                { combo: "LCTL(KC_SLSH)", description: "Comment line" },
+                { combo: "LALT(KC_UP)", description: "Move line Up" },
+                { combo: "LALT(KC_DOWN)", description: "Move line Down" },
+                { combo: "LSFT(LALT(KC_DOWN))", description: "Copy line down" },
+                { combo: "LCTL(LSFT(KC_K))", description: "Delete line" },
+                { combo: "LCTL(KC_D)", description: "Select next occurrence" },
+                { combo: "LCTL(KC_L)", description: "Select line" },
+                { combo: "LCTL(KC_ENT)", description: "Insert line below" },
+                { combo: "LCTL(LSFT(KC_ENT))", description: "Insert line above" },
+                { combo: "LCTL(KC_TAB)", description: "Next editor" },
+                { combo: "LCTL(LSFT(KC_TAB))", description: "Previous editor" },
+                { combo: "LCTL(KC_W)", description: "Close editor" },
             ],
             "KICAD_SHORTCUTS": [
-                { combo: "Ctrl+N", description: "New project" },
-                { combo: "Ctrl+O", description: "Open project" },
-                { combo: "Ctrl+S", description: "Save" },
-                { combo: "Ctrl+Z", description: "Undo" },
-                { combo: "Ctrl+Y", description: "Redo" },
-                { combo: "Ctrl+C/V/X", description: "Copy/Paste/Cut" },
-                { combo: "Del", description: "Delete" },
-                { combo: "R", description: "Rotate" },
-                { combo: "M", description: "Move" },
-                { combo: "E", description: "Edit properties" },
-                { combo: "W", description: "Wire" },
-                { combo: "P", description: "Place component" },
-                { combo: "Shift+Space", description: "Cycle units" },
-                { combo: "Page Up/Down", description: "Zoom in/out" },
-                { combo: "Ctrl+Scroll", description: "Zoom" },
-                { combo: "F1/F2/F3/F4", description: "Pan directions" },
-                { combo: "Space", description: "Reset origin" },
-                { combo: "Alt+1-5", description: "Layer view" },
-                { combo: "Ctrl+B", description: "Rebuild ratsnest" },
-                { combo: "Ctrl+H", description: "Highlight net" },
+                { combo: "LCTL(KC_N)", description: "New project" },
+                { combo: "LCTL(KC_O)", description: "Open project" },
+                { combo: "LCTL(KC_S)", description: "Save" },
+                { combo: "LCTL(KC_Z)", description: "Undo" },
+                { combo: "LCTL(KC_Y)", description: "Redo" },
+                { combo: "LCTL(KC_C)", description: "Copy" },
+                { combo: "LCTL(KC_V)", description: "Paste" },
+                { combo: "LCTL(KC_X)", description: "Cut" },
+                { combo: "KC_DEL", description: "Delete" },
+                { combo: "KC_R", description: "Rotate" },
+                { combo: "KC_M", description: "Move" },
+                { combo: "KC_E", description: "Edit properties" },
+                { combo: "KC_W", description: "Wire" },
+                { combo: "KC_P", description: "Place component" },
+                { combo: "LSFT(KC_SPC)", description: "Cycle units" },
+                { combo: "KC_PGUP", description: "Zoom in" },
+                { combo: "KC_PGDN", description: "Zoom out" },
+                { combo: "LCTL(KC_SCROLL)", description: "Zoom" }, // Not standard HID
+                { combo: "KC_F1", description: "Pan Left" },
+                { combo: "KC_F2", description: "Pan Right" },
+                { combo: "KC_F3", description: "Pan Up" },
+                { combo: "KC_F4", description: "Pan Down" },
+                { combo: "KC_SPC", description: "Reset origin" },
+                { combo: "LALT(KC_1)", description: "Layer 1 view" },
+                { combo: "LALT(KC_2)", description: "Layer 2 view" },
+                { combo: "LALT(KC_3)", description: "Layer 3 view" },
+                { combo: "LALT(KC_4)", description: "Layer 4 view" },
+                { combo: "LALT(KC_5)", description: "Layer 5 view" },
+                { combo: "LCTL(KC_B)", description: "Rebuild ratsnest" },
+                { combo: "LCTL(KC_H)", description: "Highlight net" },
             ],
             "FUSION_360_SHORTCUTS": [
-                { combo: "S", description: "Toolbox" },
-                { combo: "L", description: "Line" },
-                { combo: "R", description: "Rectangle" },
-                { combo: "C", description: "Circle" },
-                { combo: "D", description: "Dimension" },
-                { combo: "T", description: "Text" },
-                { combo: "M", description: "Move" },
-                { combo: "Q", description: "Press/Pull" },
-                { combo: "E", description: "Extrude" },
-                { combo: "F", description: "Fillet" },
-                { combo: "Shift+S", description: "Sketch shortcuts" },
-                { combo: "Ctrl+Z/Y", description: "Undo/Redo" },
-                { combo: "Ctrl+C/V", description: "Copy/Paste" },
-                { combo: "Delete", description: "Remove" },
-                { combo: "B", description: "Emboss" },
-                { combo: "J", description: "Joint" },
-                { combo: "H", description: "Hole" },
-                { combo: "G", description: "Grid settings" },
-                { combo: "Tab", description: "Switch input" },
-                { combo: "Alt+Drag", description: "Orbit" },
-                { combo: "Shift+Scroll", description: "Pan" },
-                { combo: "Scroll", description: "Zoom" },
-                { combo: "Home", description: "View cube" },
-                { combo: "F6", description: "Home view" },
-                { combo: "F7", description: "Slice" },
-                { combo: "Ctrl+1/2/3", description: "Orthographic views" },
-                { combo: "Ctrl+Shift+E", description: "Export" },
-                { combo: "Ctrl+S", description: "Save" },
+                { combo: "KC_S", description: "Toolbox" },
+                { combo: "KC_L", description: "Line" },
+                { combo: "KC_R", description: "Rectangle" },
+                { combo: "KC_C", description: "Circle" },
+                { combo: "KC_D", description: "Dimension" },
+                { combo: "KC_T", description: "Text" },
+                { combo: "KC_M", description: "Move" },
+                { combo: "KC_Q", description: "Press/Pull" },
+                { combo: "KC_E", description: "Extrude" },
+                { combo: "KC_F", description: "Fillet" },
+                { combo: "LSFT(KC_S)", description: "Sketch shortcuts" },
+                { combo: "LCTL(KC_Z)", description: "Undo" },
+                { combo: "LCTL(KC_Y)", description: "Redo" },
+                { combo: "LCTL(KC_C)", description: "Copy" },
+                { combo: "LCTL(KC_V)", description: "Paste" },
+                { combo: "KC_DEL", description: "Remove" },
+                { combo: "KC_B", description: "Emboss" },
+                { combo: "KC_J", description: "Joint" },
+                { combo: "KC_H", description: "Hole" },
+                { combo: "KC_G", description: "Grid settings" },
+                { combo: "KC_TAB", description: "Switch input" },
+                { combo: "LALT(KC_DRAG)", description: "Orbit" }, // Not standard HID
+                { combo: "LSFT(KC_SCROLL)", description: "Pan" }, // Not standard HID
+                { combo: "KC_SCROLL", description: "Zoom" }, // Not standard HID
+                { combo: "KC_HOME", description: "View cube" },
+                { combo: "KC_F6", description: "Home view" },
+                { combo: "KC_F7", description: "Slice" },
+                { combo: "LCTL(KC_1)", description: "Orthographic view 1" },
+                { combo: "LCTL(KC_2)", description: "Orthographic view 2" },
+                { combo: "LCTL(KC_3)", description: "Orthographic view 3" },
+                { combo: "LCTL(LSFT(KC_E))", description: "Export" },
+                { combo: "LCTL(KC_S)", description: "Save" },
             ],
             "CANVA_SHORTCUTS": [
-                { combo: "Ctrl+C/V/X", description: "Copy/Paste/Cut" },
-                { combo: "Ctrl+Z/Y", description: "Undo/Redo" },
-                { combo: "Ctrl+A", description: "Select all" },
-                { combo: "Delete", description: "Remove" },
-                { combo: "Ctrl+G/U", description: "Group/Ungroup" },
-                { combo: "Ctrl+D", description: "Duplicate" },
-                { combo: "Shift+Arrow", description: "Nudge" },
-                { combo: "Alt+Drag", description: "Duplicate while dragging" },
-                { combo: "T", description: "Add text" },
-                { combo: "R", description: "Add rectangle" },
-                { combo: "L", description: "Add line" },
-                { combo: "C", description: "Add circle" },
-                { combo: "B", description: "Bold" },
-                { combo: "I", description: "Italic" }, // Corrected from '1' to 'I' based on common Canva shortcuts
-                { combo: "U", description: "Underline" },
-                { combo: "Ctrl+K", description: "Link" },
-                { combo: "Ctrl+Shift+K", description: "Unlink" },
-                { combo: "Ctrl+E", description: "Align center" },
-                { combo: "Ctrl+L/R", description: "Align left/right" },
-                { combo: "Ctrl+Shift+M", description: "Comment" },
-                { combo: "Alt+[/]", description: "Layer back/front" },
-                { combo: "Ctrl+P", description: "Print" },
-                { combo: "Ctrl+S", description: "Save" },
-                { combo: "Ctrl+Shift+S", description: "Save As" },
-                { combo: "Ctrl+Shift+D", description: "Download" },
+                { combo: "LCTL(KC_C)", description: "Copy" },
+                { combo: "LCTL(KC_V)", description: "Paste" },
+                { combo: "LCTL(KC_X)", description: "Cut" },
+                { combo: "LCTL(KC_Z)", description: "Undo" },
+                { combo: "LCTL(KC_Y)", description: "Redo" },
+                { combo: "LCTL(KC_A)", description: "Select all" },
+                { combo: "KC_DEL", description: "Remove" },
+                { combo: "LCTL(KC_G)", description: "Group" },
+                { combo: "LCTL(KC_U)", description: "Ungroup" },
+                { combo: "LCTL(KC_D)", description: "Duplicate" },
+                { combo: "LSFT(KC_ARROW)", description: "Nudge" }, // Needs specific arrow key
+                { combo: "LALT(KC_DRAG)", description: "Duplicate while dragging" }, // Not standard HID
+                { combo: "KC_T", description: "Add text" },
+                { combo: "KC_R", description: "Add rectangle" },
+                { combo: "KC_L", description: "Add line" },
+                { combo: "KC_C", description: "Add circle" },
+                { combo: "KC_B", description: "Bold" },
+                { combo: "KC_I", description: "Italic" },
+                { combo: "KC_U", description: "Underline" },
+                { combo: "LCTL(KC_K)", description: "Link" },
+                { combo: "LCTL(LSFT(KC_K))", description: "Unlink" },
+                { combo: "LCTL(KC_E)", description: "Align center" },
+                { combo: "LCTL(KC_L)", description: "Align left" },
+                { combo: "LCTL(KC_R)", description: "Align right" },
+                { combo: "LCTL(LSFT(KC_M))", description: "Comment" },
+                { combo: "LALT(KC_LBRC)", description: "Layer back" },
+                { combo: "LALT(KC_RBRC)", description: "Layer front" },
+                { combo: "LCTL(KC_P)", description: "Print" },
+                { combo: "LCTL(KC_S)", description: "Save" },
+                { combo: "LCTL(LSFT(KC_S))", description: "Save As" },
+                { combo: "LCTL(LSFT(KC_D))", description: "Download" },
             ],
             // The "MACRO" category will be dynamically populated based on the 'macros' state
             // "MEDIA", "LAYERS", "SPECIAL", "QMK LIGHTING" remain static presets
@@ -772,6 +803,16 @@
                 "ko": "JSON 구문 분석 실패: {error}",
                 "es": "Fallo al analizar JSON: {error}"
             },
+            "jsonLoadedTitle": { // New translation for JSON loaded successfully
+                "en": "JSON Loaded",
+                "ko": "JSON 불러옴",
+                "es": "JSON Cargado"
+            },
+            "jsonLoadedMessage": { // New translation for JSON loaded successfully
+                "en": "Keymap loaded successfully from the text area.",
+                "ko": "텍스트 영역에서 키맵을 성공적으로 불러왔습니다.",
+                "es": "Mapa de teclas cargado exitosamente desde el área de texto."
+            },
             "macroNameEmptyError": {
                 "en": "Macro name cannot be empty.",
                 "ko": "매크로 이름은 비워둘 수 없습니다.",
@@ -850,7 +891,7 @@
             "aiShortcutGeneratorDescription": {
                 "en": "Describe the shortcuts you need (e.g., \"common shortcuts for web browsing in macOS\", \"media controls for Windows\").",
                 "ko": "필요한 단축키를 설명하세요 (예: \"macOS 웹 브라우징용 일반 단축키\", \"Windows 미디어 컨트롤\").",
-                "es": "Describa los atajos que necesita (ej., \"atajos comunes para navegar por la web en macOS\", \"controles multimedia para Windows\")."
+                "es": "Describa los atajos que necesita (ej., \"atajos comunes para navegar documentos en macOS\", \"controles multimedia para Windows\")."
             },
             "aiShortcutGeneratorPlaceholder": {
                 "en": "e.g., shortcuts for navigating documents in Linux",
@@ -1117,16 +1158,19 @@
                 "ko": "디버그 모드 활성화",
                 "es": "Activar Modo Depuración"
             },
-            "debugModeDescription": {
-                "en": "Toggle debug mode to see detailed logs in the console.",
-                "ko": "디버그 모드를 전환하여 콘솔에서 자세한 로그를 확인합니다.",
-                "es": "Alternar el modo de depuración para ver registros detallados en la consola."
+            "disableDebugMode": {
+                "en": "Disable Debug Mode",
+                "ko": "디버그 모드 비활성화",
+                "es": "Desactivar Modo Depuración"
             }
         };
         // --- END OF TRANSLATIONS DATA ---
 
         // Helper function to create an empty 3x3 grid for a keymap layer
-        const createEmptyGrid = () => Array(3).fill().map(() => Array(3).fill({ tap: null, hold: null }));
+        const createEmptyGrid = () => Array(3).fill().map(() => Array(3).fill({ tap: { combo: "KC_NO", description: "Empty" }, hold: null }));
+
+        // Default keymap for a 3x3 grid (Layer 0)
+        const DEFAULT_KEYMAP = { '0': createEmptyGrid() };
 
         // --- START OF KeyComponent DEFINITION ---
         const KeyComponent = React.memo(({
@@ -1149,15 +1193,13 @@
             let subText = '';
 
             // Determine main and sub text based on available data
-            if (description) {
+            if (description && description !== combo) { // Prefer description, but avoid duplicating if description is just the combo
                 mainText = description;
-                if (combo && combo !== description) {
-                    subText = combo;
-                }
+                subText = combo; // Show combo as subtext
             } else if (combo) {
-                mainText = combo;
+                mainText = combo; // If no distinct description, use combo as main text
             } else {
-                mainText = 'Empty';
+                mainText = 'Empty'; // Fallback for truly empty keys
             }
 
             // Append type indicators to subText if applicable
@@ -1488,7 +1530,7 @@
         // Main App component
         function App() {
             // State for the keymap, organized by layer (e.g., '0', '1', etc.)
-            const [keymap, setKeymap] = useState({ '0': createEmptyGrid() });
+            const [keymap, setKeymap] = useState(DEFAULT_KEYMAP);
             // State for the currently active layer being edited
             const [activeLayer, setActiveLayer] = useState('0');
 
@@ -1819,10 +1861,23 @@
                         const rowKeys = [];
                         for (let c = 0; c < 3; c++) {
                             const cell = keymap[layerNum][r][c];
+                            let tapValue;
+
+                            if (cell.tap && cell.tap.isMacro) {
+                                // If it's a macro, use "MACRO_ID" format
+                                tapValue = `MACRO_${cell.tap.id}`;
+                            } else if (cell.tap && cell.tap.combo) {
+                                // For regular keys or custom shortcuts, use the combo string
+                                tapValue = cell.tap.combo;
+                            } else {
+                                // Default to "KC_NO" for empty cells
+                                tapValue = "KC_NO";
+                            }
+
                             const keyObject = {
-                                tap: cell.tap ? cell.tap.combo : "KC_NO",
-                                hold: null, // Always null as per desired format
-                                combo: null, // Always null as per desired format
+                                tap: tapValue,
+                                hold: null, // Always null as per desired firmware format
+                                combo: null, // Always null as per desired firmware format
                                 description: cell.tap ? cell.tap.description : translations.emptyKey[language]
                             };
                             rowKeys.push(keyObject);
@@ -1933,8 +1988,18 @@
                             const rowKeys = [];
                             for (let c = 0; c < 3; c++) {
                                 const cell = keymap[layerNum][r][c];
+                                let tapValue;
+
+                                if (cell.tap && cell.tap.isMacro) {
+                                    tapValue = `MACRO_${cell.tap.id}`;
+                                } else if (cell.tap && cell.tap.combo) {
+                                    tapValue = cell.tap.combo;
+                                } else {
+                                    tapValue = "KC_NO";
+                                }
+
                                 rowKeys.push({
-                                    tap: cell.tap ? cell.tap.combo : "KC_NO",
+                                    tap: tapValue,
                                     hold: null,
                                     combo: null,
                                     description: cell.tap ? cell.tap.description : translations.emptyKey[language]
@@ -1975,6 +2040,7 @@
                     // Iterate through top-level keys, assuming they are layer numbers
                     for (const layerNum in parsedJson) {
                         const layerData = parsedJson[layerNum];
+                        // Validate if layerData is a 3x3 array
                         if (Array.isArray(layerData) && layerData.length === 3 && layerData.every(row => Array.isArray(row) && row.length === 3)) {
                             const gridLayer = createEmptyGrid(); // Start with an empty 3x3 grid
 
@@ -1982,29 +2048,41 @@
                                 for (let c = 0; c < 3; c++) {
                                     const keyObject = layerData[r][c];
                                     if (keyObject && typeof keyObject === 'object' && keyObject.tap) {
-                                        let tapObj = {
-                                            combo: keyObject.tap,
-                                            description: keyObject.description || keyObject.tap,
-                                            hold: keyObject.hold, // Preserve hold if present in JSON
-                                            combo: keyObject.combo // Preserve combo if present in JSON
+                                        let tapValue = keyObject.tap; // The string from JSON (e.g., "KC_A", "MACRO_1")
+                                        let tapDescription = keyObject.description || tapValue; // Use description if available, else tapValue
+
+                                        let assignedKeyData = {
+                                            combo: tapValue,
+                                            description: tapDescription
                                         };
 
                                         // Check if it's a macro reference (e.g., "MACRO_1", "MACRO_HELLO_WORLD")
-                                        if (keyObject.tap.startsWith('MACRO_')) {
-                                            tapObj.isMacro = true;
-                                            // For macros loaded from JSON, we rely on the description provided.
-                                            // The actual macro sequence is managed by the 'macros' state,
-                                            // which is loaded from local storage independently.
+                                        if (tapValue.startsWith('MACRO_')) {
+                                            const macroId = parseInt(tapValue.substring(6)); // Extract ID
+                                            assignedKeyData.id = macroId; // Store macro ID
+                                            assignedKeyData.isMacro = true;
+                                            // The description for macros loaded from JSON might be generic.
+                                            // We could try to find the actual macro name from the `macros` state,
+                                            // but for simplicity, we'll use the description from the JSON or default.
+                                            // If the macro ID is found in the current `macros` state, use its name.
+                                            const existingMacro = macros.find(m => m.id === macroId);
+                                            if (existingMacro) {
+                                                assignedKeyData.description = existingMacro.name;
+                                            } else {
+                                                assignedKeyData.description = `Macro ${macroId}`; // Fallback description
+                                            }
                                         } else {
-                                            // Check if it's a known preset or custom shortcut
-                                            const foundPreset = Object.values(presets).flat().find(p => p.combo === keyObject.tap);
-                                            if (!foundPreset) {
-                                                tapObj.isCustomShortcut = true;
+                                            // It's a regular keycode or custom shortcut
+                                            // Check if it's a known standard keycode from allKeyboardButtons
+                                            const isStandardKey = allKeyboardButtons.some(k => k.combo === tapValue);
+                                            if (!isStandardKey) {
+                                                // If not a standard key, treat it as a custom shortcut
+                                                assignedKeyData.isCustomShortcut = true;
                                             }
                                         }
-                                        gridLayer[r][c] = { tap: tapObj, hold: null }; // Set hold to null for UI consistency
+                                        gridLayer[r][c] = { tap: assignedKeyData, hold: null };
                                     } else {
-                                        gridLayer[r][c] = { tap: null, hold: null }; // Default for KC_NO or malformed
+                                        gridLayer[r][c] = { tap: null, hold: null }; // Default for empty or malformed cells
                                     }
                                 }
                             }
@@ -2022,13 +2100,9 @@
                     setKeymap(newKeymap);
                     setActiveLayer('0'); // Reset active layer to 0 after loading
 
-                    // Note: This function does NOT load macro definitions (sequences) from the JSON,
-                    // as the provided JSON format does not include them. Macro definitions are
-                    // managed by the 'macros' state and loaded from local storage.
-
                     setModalContent({
-                        title: translations.jsonLoadedTitle[language],
-                        message: translations.jsonLoadedMessage[language]
+                        title: translations.jsonLoadedTitle[language], // Reusing translation for success
+                        message: translations.jsonLoadedMessage[language] // Reusing translation for success
                     });
                 } catch (error) {
                     // Handle any JSON parsing errors
@@ -2106,7 +2180,7 @@
                 try {
                     const chatHistory = [];
                     // Construct the prompt for the AI model
-                    const promptText = `Generate a JSON array of 5-10 common keyboard shortcuts based on the following request: "${aiPrompt}". Each object in the array should have two properties: "combo" (the actual key combination, e.g., "Ctrl+C", "Win+D", "KC_MPLY") and "description" (a brief explanation of what the shortcut does, e.g., "Copy selected text", "Show desktop", "Play/Pause media"). Ensure the output is valid JSON and only contains the array.`;
+                    const promptText = `Generate a JSON array of 5-10 common keyboard shortcuts based on the following request: "${aiPrompt}". Each object in the array should have two properties: "combo" (the actual key combination, e.g., "LCTL(KC_C)", "LGUI(KC_D)", "KC_MPLY") and "description" (a brief explanation of what the shortcut does, e.g., "Copy selected text", "Show desktop", "Play/Pause media"). Ensure the output is valid JSON and only contains the array.`;
 
                     chatHistory.push({ role: "user", parts: [{ text: promptText }] });
                     const payload = {
@@ -2184,7 +2258,7 @@
                 try {
                     const chatHistory = [];
                     // Construct the prompt for the AI model
-                    const promptText = `Generate a JSON array of 1-3 simple macros based on the following request: "${aiMacroPrompt}". Each object in the array should have two properties: "name" (a short descriptive name for the macro) and "sequence" (the key sequence for the macro, e.g., "Hello World!{Enter}", "Ctrl+S{Delay 100}Ctrl+P"). Use common key names like {Enter}, {Tab}, {Space}, {Escape}, {Backspace}, {Delete} for special keys. Ensure the output is valid JSON and only contains the array.`;
+                    const promptText = `Generate a JSON array of 1-3 simple macros based on the following request: "${aiMacroPrompt}". Each object in the array should have two properties: "name" (a short descriptive name for the macro) and "sequence" (the key sequence for the macro, e.g., "Hello World!{Enter}", "LCTL(KC_S){Delay 100}LCTL(KC_P)"). Use QMK-style keycodes for special keys and modifiers like LCTL(), LGUI(), KC_ENT, KC_TAB, KC_SPC, KC_ESC, KC_BSPC, KC_DEL. Ensure the output is valid JSON and only contains the array.`;
 
                     chatHistory.push({ role: "user", parts: [{ text: promptText }] });
                     const payload = {
@@ -2603,8 +2677,18 @@
                                                     const rowKeys = [];
                                                     for (let c = 0; c < 3; c++) {
                                                         const cell = keymap[layerNum][r][c];
+                                                        let tapValue;
+
+                                                        if (cell.tap && cell.tap.isMacro) {
+                                                            tapValue = `MACRO_${cell.tap.id}`;
+                                                        } else if (cell.tap && cell.tap.combo) {
+                                                            tapValue = cell.tap.combo;
+                                                        } else {
+                                                            tapValue = "KC_NO";
+                                                        }
+
                                                         rowKeys.push({
-                                                            tap: cell.tap ? cell.tap.combo : "KC_NO",
+                                                            tap: tapValue,
                                                             hold: null,
                                                             combo: null,
                                                             description: cell.tap ? cell.tap.description : translations.emptyKey[language]
