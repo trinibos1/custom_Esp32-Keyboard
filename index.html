@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trkey Keymap Configurator</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">\
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -850,7 +850,7 @@
             "aiShortcutGeneratorDescription": {
                 "en": "Describe the shortcuts you need (e.g., \"common shortcuts for web browsing in macOS\", \"media controls for Windows\").",
                 "ko": "필요한 단축키를 설명하세요 (예: \"macOS 웹 브라우징용 일반 단축키\", \"Windows 미디어 컨트롤\").",
-                "es": "Describa los atajos que necesita (ej., \"atajos comunes para navegar por la web en macOS\", \"controles multimedia para Windows\")."
+                "es": "Describa los atajos que necesita (ej., \"atajos comunes para navegar documentos en Linux\")."
             },
             "aiShortcutGeneratorPlaceholder": {
                 "en": "e.g., shortcuts for navigating documents in Linux",
@@ -1121,18 +1121,30 @@
                 "en": "Toggle debug mode to see detailed logs in the console.",
                 "ko": "디버그 모드를 전환하여 콘솔에서 자세한 로그를 확인합니다.",
                 "es": "Alternar el modo de depuración para ver registros detallados en la consola."
+            },
+            "jsonLoadedTitle": { // New translation key
+                "en": "JSON Loaded",
+                "ko": "JSON 불러옴",
+                "es": "JSON Cargado"
+            },
+            "jsonLoadedMessage": { // New translation key
+                "en": "Keymap and combos loaded successfully from JSON.",
+                "ko": "JSON에서 키맵과 콤보가 성공적으로 불러와졌습니다.",
+                "es": "Mapa de teclas y combos cargados exitosamente desde JSON."
             }
         };
         // --- END OF TRANSLATIONS DATA ---
 
         // Helper function to create an empty 3x3 grid for a keymap layer
-        const createEmptyGrid = () => Array(3).fill().map(() => Array(3).fill({ tap: null, hold: null }));
+        // Each cell now stores an object with `tap`, `hold`, and `combo` properties as strings, matching the desired JSON format.
+        // It also includes `description` for display purposes.
+        const createEmptyGrid = () => Array(3).fill().map(() => Array(3).fill({ tap: "KC_NO", hold: null, combo: null, description: "Empty" }));
 
         // --- START OF KeyComponent DEFINITION ---
         const KeyComponent = React.memo(({
-            keyData,
-            isMacro, // Prop from App.js to indicate if this key represents a macro
-            isShortcut, // Prop from App.js to indicate if this key represents a custom/AI shortcut
+            keyData, // keyData now includes { tap, hold, combo, description }
+            isMacro,
+            isShortcut,
             onClick,
             onDoubleClick,
             customBgColor,
@@ -1141,23 +1153,20 @@
             onDragStart,
             onDrop,
             onDragOver,
-            onDragEnd
+            onDragEnd,
+            language // Added language prop
         }) => {
-            const { combo, description } = keyData;
+            // Extract tap value for main display.
+            // If keyData.tap is "KC_NO", use the translated "Empty" text.
+            const mainText = keyData.tap !== "KC_NO" ? (keyData.description || keyData.tap) : translations.emptyKey[language];
 
-            let mainText = '';
+            // Subtext can include hold or combo, if present
             let subText = '';
-
-            // Determine main and sub text based on available data
-            if (description) {
-                mainText = description;
-                if (combo && combo !== description) {
-                    subText = combo;
-                }
-            } else if (combo) {
-                mainText = combo;
-            } else {
-                mainText = 'Empty';
+            if (keyData.hold) {
+                subText += `Hold: ${keyData.hold}`;
+            }
+            if (keyData.combo) {
+                subText += subText ? `, Combo: ${keyData.combo}` : `Combo: ${keyData.combo}`;
             }
 
             // Append type indicators to subText if applicable
@@ -1205,9 +1214,16 @@
                     mainTextColorClass = 'text-white';
                     subTextColorClass = 'text-blue-200 opacity-80';
                 } else { // Regular keys
-                    colorClass = 'bg-red-500 hover:bg-red-600';
-                    mainTextColorClass = 'text-black'; // Main text is black as requested
-                    subTextColorClass = 'text-zinc-700 opacity-80'; // Subtext is a darker gray for contrast on red
+                    // If the key has hold or combo, give it a slightly different color to distinguish
+                    if (keyData.hold || keyData.combo) {
+                        colorClass = 'bg-yellow-500 hover:bg-yellow-600';
+                        mainTextColorClass = 'text-black';
+                        subTextColorClass = 'text-zinc-700 opacity-80';
+                    } else {
+                        colorClass = 'bg-red-500 hover:bg-red-600';
+                        mainTextColorClass = 'text-black'; // Main text is black as requested
+                        subTextColorClass = 'text-zinc-700 opacity-80'; // Subtext is a darker gray for contrast on red
+                    }
                 }
             }
 
@@ -1220,7 +1236,7 @@
                     draggable={draggable}
                     onDragStart={onDragStart}
                     onDrop={onDrop}
-                    onDragOver={onDragOver}
+                    onDragOver={(e) => e.preventDefault()} // Ensure drop is allowed
                     onDragEnd={onDragEnd}
                 >
                     <div className="text-center break-words leading-tight">
@@ -1488,9 +1504,14 @@
         // Main App component
         function App() {
             // State for the keymap, organized by layer (e.g., '0', '1', etc.)
+            // Each cell now stores an object with `tap`, `hold`, and `combo` properties as strings,
+            // along with a `description` for display.
             const [keymap, setKeymap] = useState({ '0': createEmptyGrid() });
             // State for the currently active layer being edited
             const [activeLayer, setActiveLayer] = useState('0');
+
+            // NEW STATE: For the global 'combos' array as per the new JSON format
+            const [combos, setCombos] = useState([]);
 
             // State for the pool of available shortcuts, initialized from presets
             const [shortcutPool, setShortcutPool] = useState(Object.fromEntries(Object.entries(presets).map(([k, v]) => [k, [...v]])));
@@ -1589,7 +1610,7 @@
                 return () => {
                     clearTimeout(handler);
                 };
-            }, [keymap, macros, language, debugMode]); // Dependencies that trigger saving
+            }, [keymap, macros, language, debugMode, combos]); // Dependencies that trigger saving, added 'combos'
 
             // Effect for Key Tester functionality: attaches/removes keyboard event listeners
             useEffect(() => {
@@ -1643,7 +1664,7 @@
 
 
             // Helper to check if the current active layer's keymap is entirely empty
-            const isKeymapEmpty = keymap[activeLayer] && keymap[activeLayer].flat().every(cell => cell.tap === null && cell.hold === null);
+            const isKeymapEmpty = keymap[activeLayer] && keymap[activeLayer].flat().every(cell => cell.tap === "KC_NO" && cell.hold === null && cell.combo === null);
 
 
             // Handles dropping a draggable item onto a keymap cell
@@ -1678,7 +1699,15 @@
                             // If it's from the "MACRO" category, it already has isMacro: true from the useEffect that populates shortcutPool
                             // So no need to explicitly set isMacro here again, just ensure it's copied.
 
-                            updatedLayer[row][col] = { tap: assignedShortcut, hold: null }; // Assign the augmented shortcut
+                            // Assign the dropped shortcut to the tap property, and ensure hold/combo are null
+                            updatedLayer[row][col] = {
+                                tap: assignedShortcut.combo,
+                                hold: null,
+                                combo: null,
+                                description: assignedShortcut.description,
+                                isMacro: assignedShortcut.isMacro, // Carry over the macro flag for display
+                                isCustomShortcut: assignedShortcut.isCustomShortcut // Carry over custom shortcut flag
+                            };
                         }
                         // Return the updated keymap state
                         return { ...prevKeymap, [activeLayer]: updatedLayer };
@@ -1686,7 +1715,13 @@
                         // Fallback if JSON parsing fails (e.g., plain text was dragged)
                         console.error("Failed to parse dropped data:", error);
                         // Treat as a generic custom shortcut if parsing fails
-                        updatedLayer[row][col] = { tap: { combo: data, description: data, isCustomShortcut: true }, hold: null };
+                        updatedLayer[row][col] = {
+                            tap: data,
+                            hold: null,
+                            combo: null,
+                            description: data,
+                            isCustomShortcut: true
+                        };
                         return { ...prevKeymap, [activeLayer]: updatedLayer };
                     }
                 });
@@ -1736,7 +1771,15 @@
                         if (selectedShortcutCategory === "AI GENERATED" || assignedShortcut.isCustomShortcut) {
                             assignedShortcut.isCustomShortcut = true;
                         }
-                        updatedLayer[row][col] = { tap: assignedShortcut, hold: null };
+                        // Assign the shortcut combo to the tap property, ensure hold/combo are null
+                        updatedLayer[row][col] = {
+                            tap: assignedShortcut.combo,
+                            hold: null,
+                            combo: null,
+                            description: assignedShortcut.description,
+                            isMacro: assignedShortcut.isMacro,
+                            isCustomShortcut: assignedShortcut.isCustomShortcut
+                        };
                         return { ...prevKeymap, [activeLayer]: updatedLayer };
                     });
                     setSelectedKeyForMapping(null); // Clear selection after mapping
@@ -1757,11 +1800,12 @@
             };
 
 
-            // Saves the current keymap and macros to browser's local storage
+            // Saves the current keymap, macros, and combos to browser's local storage
             const saveProfile = () => {
                 const profileData = {
                     keymap: keymap,
                     macros: macros,
+                    combos: combos, // Save the new 'combos' state
                     language: language, // Save the current language
                     debugMode: debugMode // Save debug mode state
                 };
@@ -1783,6 +1827,7 @@
                     }
                     setKeymap(loadedKeymap);
                     setMacros(profileData.macros || []); // Load macros, default to empty array if none
+                    setCombos(profileData.combos || []); // Load combos, default to empty array if none
                     setLanguage(profileData.language || 'en'); // Load language, default to English
                     setDebugMode(profileData.debugMode || false); // Load debug mode, default to false
                     // Removed modal messages for automatic loading, except for no profile found
@@ -1808,10 +1853,12 @@
                 });
             };
 
-            // Exports the current keymap to the desired JSON format
+            // Exports the current keymap and combos to the desired JSON format
             const exportKeymap = () => {
-                const fullMap = {}; // The root object will directly contain layers
+                const fullConfig = {}; // The root object will contain layers and combos
 
+                // --- Export Layers ---
+                const layersConfig = {};
                 for (const layerNum in keymap) {
                     const layerGrid = [];
                     // Iterate through the 3x3 grid row by row, then column by column
@@ -1820,20 +1867,26 @@
                         for (let c = 0; c < 3; c++) {
                             const cell = keymap[layerNum][r][c];
                             const keyObject = {
-                                tap: cell.tap ? cell.tap.combo : "KC_NO",
-                                hold: null, // Always null as per desired format
-                                combo: null, // Always null as per desired format
-                                description: cell.tap ? cell.tap.description : translations.emptyKey[language]
+                                // Ensure tap is the combo string, defaulting to "KC_NO"
+                                "tap": cell.tap || "KC_NO",
+                                "hold": cell.hold || null,
+                                "combo": cell.combo || null
                             };
                             rowKeys.push(keyObject);
                         }
                         layerGrid.push(rowKeys);
                     }
-                    fullMap[layerNum] = layerGrid; // Assign the 2D array to the layer number key
+                    layersConfig[layerNum] = layerGrid; // Assign the 2D array to the layer number key
+                }
+                Object.assign(fullConfig, layersConfig); // Add layers to the full config
+
+                // --- Export Combos ---
+                if (combos.length > 0) {
+                    fullConfig["combos"] = combos;
                 }
 
                 // Create a Blob containing the JSON data
-                const blob = new Blob([JSON.stringify(fullMap, null, 2)], { type: "application/json" });
+                const blob = new Blob([JSON.stringify(fullConfig, null, 2)], { type: "application/json" });
                 // Create a URL for the Blob
                 const url = URL.createObjectURL(blob);
                 // Create a temporary anchor element to trigger the download
@@ -1926,7 +1979,10 @@
                     const writer = connectedPort.writable.getWriter();
 
                     // Prepare the keymap data for export (using the new format)
-                    const fullMap = {};
+                    const fullConfig = {}; // The root object will contain layers and combos
+
+                    // --- Export Layers ---
+                    const layersConfig = {};
                     for (const layerNum in keymap) {
                         const layerGrid = [];
                         for (let r = 0; r < 3; r++) {
@@ -1934,18 +1990,23 @@
                             for (let c = 0; c < 3; c++) {
                                 const cell = keymap[layerNum][r][c];
                                 rowKeys.push({
-                                    tap: cell.tap ? cell.tap.combo : "KC_NO",
-                                    hold: null,
-                                    combo: null,
-                                    description: cell.tap ? cell.tap.description : translations.emptyKey[language]
+                                    "tap": cell.tap || "KC_NO",
+                                    "hold": cell.hold || null,
+                                    "combo": cell.combo || null
                                 });
                             }
                             layerGrid.push(rowKeys);
                         }
-                        fullMap[layerNum] = layerGrid;
+                        layersConfig[layerNum] = layerGrid;
+                    }
+                    Object.assign(fullConfig, layersConfig);
+
+                    // --- Export Combos ---
+                    if (combos.length > 0) {
+                        fullConfig["combos"] = combos;
                     }
 
-                    const json = JSON.stringify(fullMap); // Convert the full map to a JSON string
+                    const json = JSON.stringify(fullConfig); // Convert the full map to a JSON string
                     const encoder = new TextEncoder(); // Create a TextEncoder to convert string to bytes
                     await writer.write(encoder.encode(json)); // Write the JSON bytes to the serial port
                     writer.releaseLock(); // Release the writer lock
@@ -1966,52 +2027,72 @@
                 }
             };
 
-            // Loads keymap from a JSON string pasted into a text area
+            // Loads keymap and combos from a JSON string pasted into a text area
             const loadJsonFromTextArea = () => {
                 try {
                     const parsedJson = JSON.parse(jsonInput);
                     const newKeymap = {};
+                    const newCombos = [];
 
-                    // Iterate through top-level keys, assuming they are layer numbers
-                    for (const layerNum in parsedJson) {
-                        const layerData = parsedJson[layerNum];
-                        if (Array.isArray(layerData) && layerData.length === 3 && layerData.every(row => Array.isArray(row) && row.length === 3)) {
-                            const gridLayer = createEmptyGrid(); // Start with an empty 3x3 grid
+                    for (const key in parsedJson) {
+                        if (key === "combos" && Array.isArray(parsedJson[key])) {
+                            // If the key is "combos", extract and store them
+                            newCombos.push(...parsedJson[key]);
+                        } else if (!isNaN(Number(key)) && Array.isArray(parsedJson[key])) {
+                            // If the key is a numeric string (layer number) and the value is an array, process as a layer
+                            const layerData = parsedJson[key];
+                            if (layerData.length === 3 && layerData.every(row => Array.isArray(row) && row.length === 3)) {
+                                const gridLayer = createEmptyGrid(); // Start with an empty 3x3 grid
 
-                            for (let r = 0; r < 3; r++) {
-                                for (let c = 0; c < 3; c++) {
-                                    const keyObject = layerData[r][c];
-                                    if (keyObject && typeof keyObject === 'object' && keyObject.tap) {
-                                        let tapObj = {
-                                            combo: keyObject.tap,
-                                            description: keyObject.description || keyObject.tap,
-                                            hold: keyObject.hold, // Preserve hold if present in JSON
-                                            combo: keyObject.combo // Preserve combo if present in JSON
-                                        };
+                                for (let r = 0; r < 3; r++) {
+                                    for (let c = 0; c < 3; c++) {
+                                        const keyObject = layerData[r][c];
+                                        if (keyObject && typeof keyObject === 'object' && keyObject.tap !== undefined) {
+                                            let tapValue = keyObject.tap || "KC_NO";
+                                            let holdValue = keyObject.hold || null;
+                                            let comboValue = keyObject.combo || null;
 
-                                        // Check if it's a macro reference (e.g., "MACRO_1", "MACRO_HELLO_WORLD")
-                                        if (keyObject.tap.startsWith('MACRO_')) {
-                                            tapObj.isMacro = true;
-                                            // For macros loaded from JSON, we rely on the description provided.
-                                            // The actual macro sequence is managed by the 'macros' state,
-                                            // which is loaded from local storage independently.
-                                        } else {
-                                            // Check if it's a known preset or custom shortcut
-                                            const foundPreset = Object.values(presets).flat().find(p => p.combo === keyObject.tap);
-                                            if (!foundPreset) {
-                                                tapObj.isCustomShortcut = true;
+                                            let description = tapValue; // Default description to tap value
+                                            let isMacro = false;
+                                            let isCustomShortcut = false;
+
+                                            // Check if it's a macro reference (e.g., "MACRO_1")
+                                            if (tapValue.startsWith('MACRO_')) {
+                                                isMacro = true;
+                                                // Try to find the macro by ID to get its name for description
+                                                const macroId = parseInt(tapValue.substring(6));
+                                                const foundMacro = macros.find(m => m.id === macroId);
+                                                description = foundMacro ? foundMacro.name : tapValue; // Use macro name or raw tap
+                                            } else {
+                                                // Check if it's a known preset or custom shortcut for description
+                                                const foundPreset = Object.values(presets).flat().find(p => p.combo === tapValue);
+                                                if (foundPreset) {
+                                                    description = foundPreset.description;
+                                                } else {
+                                                    isCustomShortcut = true;
+                                                }
                                             }
+
+                                            gridLayer[r][c] = {
+                                                tap: tapValue,
+                                                hold: holdValue,
+                                                combo: comboValue,
+                                                description: description,
+                                                isMacro: isMacro,
+                                                isCustomShortcut: isCustomShortcut
+                                            };
+                                        } else {
+                                            gridLayer[r][c] = { tap: "KC_NO", hold: null, combo: null, description: translations.emptyKey[language] };
                                         }
-                                        gridLayer[r][c] = { tap: tapObj, hold: null }; // Set hold to null for UI consistency
-                                    } else {
-                                        gridLayer[r][c] = { tap: null, hold: null }; // Default for KC_NO or malformed
                                     }
                                 }
+                                newKeymap[String(key)] = gridLayer; // Store with string key for consistency
+                            } else {
+                                console.warn(`Layer ${key} in JSON is malformed (expected 3x3 grid) and was reset to empty.`);
+                                newKeymap[String(key)] = createEmptyGrid();
                             }
-                            newKeymap[String(layerNum)] = gridLayer; // Store with string key for consistency
                         } else {
-                            console.warn(`Layer ${layerNum} in JSON is malformed (expected 3x3 grid) and was reset to empty.`);
-                            newKeymap[String(layerNum)] = createEmptyGrid();
+                            console.warn(`Unexpected top-level key in JSON: ${key}. It will be ignored.`);
                         }
                     }
 
@@ -2020,11 +2101,8 @@
                         newKeymap['0'] = createEmptyGrid();
                     }
                     setKeymap(newKeymap);
+                    setCombos(newCombos); // Set the new combos state
                     setActiveLayer('0'); // Reset active layer to 0 after loading
-
-                    // Note: This function does NOT load macro definitions (sequences) from the JSON,
-                    // as the provided JSON format does not include them. Macro definitions are
-                    // managed by the 'macros' state and loaded from local storage.
 
                     setModalContent({
                         title: translations.jsonLoadedTitle[language],
@@ -2184,7 +2262,7 @@
                 try {
                     const chatHistory = [];
                     // Construct the prompt for the AI model
-                    const promptText = `Generate a JSON array of 1-3 simple macros based on the following request: "${aiMacroPrompt}". Each object in the array should have two properties: "name" (a short descriptive name for the macro) and "sequence" (the key sequence for the macro, e.g., "Hello World!{Enter}", "Ctrl+S{Delay 100}Ctrl+P"). Use common key names like {Enter}, {Tab}, {Space}, {Escape}, {Backspace}, {Delete} for special keys. Ensure the output is valid JSON and only contains the array.`;
+                    const promptText = `Generate a JSON array of 1-3 simple macros based on the following request: "${aiMacroPrompt}". Each object in the array should have two properties: "name" (a short descriptive name for the macro) and "sequence" (the key sequence for the macro, e.g., "Hello World!{Enter}", "Ctrl+S{Delay 100}{Ctrl+P}"). Use common key names like {Enter}, {Tab}, {Space}, {Escape}, {Backspace}, {Delete} for special keys. Ensure the output is valid JSON and only contains the array.`;
 
                     chatHistory.push({ role: "user", parts: [{ text: promptText }] });
                     const payload = {
@@ -2354,16 +2432,16 @@
                                                     row.map((cell, cIdx) => (
                                                         <KeyComponent // Render each key using the KeyComponent
                                                             key={`${rIdx}-${cIdx}`}
-                                                            keyData={cell.tap || {}} // Pass tap data to KeyComponent
-                                                            isMacro={cell.tap && cell.tap.isMacro} // Pass isMacro flag
-                                                            isShortcut={cell.tap && cell.tap.isCustomShortcut} // Pass isCustomShortcut flag
+                                                            keyData={cell} // Pass the entire cell object
+                                                            isMacro={cell.isMacro} // Pass isMacro flag
+                                                            isShortcut={cell.isCustomShortcut} // Pass isCustomShortcut flag
                                                             onClick={() => handleKeymapCellClick(rIdx, cIdx)} // Click-to-map
                                                             // Drag and drop props for reordering and assigning
                                                             draggable
                                                             onDragStart={(e) => handleKeymapDragStart(e, cell, rIdx, cIdx)}
                                                             onDrop={(e) => handleDrop(e, rIdx, cIdx)}
-                                                            onDragOver={(e) => e.preventDefault()} // Allow drop
                                                             onDragEnd={handleDragEnd}
+                                                            language={language} {/* Pass language prop here */}
                                                             // Tailwind classes for styling and hover effects (removed bg-zinc-700 and text-white)
                                                             customStyles={`
                                                                 w-20 h-20 sm:w-24 sm:h-24 rounded-md shadow-md border
@@ -2596,25 +2674,31 @@
                                 <pre className="mt-2 text-sm bg-zinc-900 p-6 rounded-lg text-left w-full max-w-4xl overflow-x-auto border border-red-500 font-mono shadow-inner">
                                     {/* This JSON.stringify renders the current keymap state as formatted JSON */}
                                     {JSON.stringify(
-                                        Object.fromEntries(
-                                            Object.keys(keymap).map(layerNum => {
+                                        (() => {
+                                            const exportData = {};
+                                            // Add layers
+                                            for (const layerNum in keymap) {
                                                 const layerGrid = [];
                                                 for (let r = 0; r < 3; r++) {
                                                     const rowKeys = [];
                                                     for (let c = 0; c < 3; c++) {
                                                         const cell = keymap[layerNum][r][c];
                                                         rowKeys.push({
-                                                            tap: cell.tap ? cell.tap.combo : "KC_NO",
-                                                            hold: null,
-                                                            combo: null,
-                                                            description: cell.tap ? cell.tap.description : translations.emptyKey[language]
+                                                            "tap": cell.tap || "KC_NO",
+                                                            "hold": cell.hold || null,
+                                                            "combo": cell.combo || null
                                                         });
                                                     }
                                                     layerGrid.push(rowKeys);
                                                 }
-                                                return [layerNum, layerGrid];
-                                            })
-                                        ),
+                                                exportData[layerNum] = layerGrid;
+                                            }
+                                            // Add combos if they exist
+                                            if (combos.length > 0) {
+                                                exportData["combos"] = combos;
+                                            }
+                                            return exportData;
+                                        })(),
                                         null, 2
                                     )}
                                 </pre>
